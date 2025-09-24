@@ -1,0 +1,151 @@
+/* Styling of the project */        
+/* Global font */
+html, body {
+  font-family: 'Times New Roman', Times, serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+/* Set the size of the map container */
+#map {
+	flex: 1; /*height: 100%;*/
+}
+/* Shared button style */
+.map-btn {
+  position: absolute;
+  right: 10px;
+  background-color: #F0FFFF;
+  border: 1px solid #ccc;
+  padding: 3px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: 'Times New Roman', Times, serif;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}		
+/* Reset view button brigs an overview window of the pilots */
+#reset-view-button {
+	top: 2px;
+}
+/* Button to load polygon data for coastal units from local drive */
+#load-locations-btn {
+	top: 27px;
+}
+/* Button to save polygon data for coastal units to local drive */
+#save-locations-btn {
+	top: 52px;
+}
+/* Button to load geojson shape file */
+#file-select-btn {
+	top: 77px;
+}
+/* Button to finish modifying shape of polygon */
+#done-editing-btn {
+	top: 110px;
+	position: absolute;
+	right: 10px;
+	background-color: #F0FFFF;
+	border: 1px solid #ccc;
+	padding: 3px 10px;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 12px;
+	font-family: 'Times New Roman', Times, serif;
+	text-align: center;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+	display: none;
+	z-index: 3000;
+}
+#done-editing-btn:hover {
+	background-color: #a2c4c9;
+}
+/* Styling for the headers */
+h1 {
+  font-family: 'Times New Roman', Times, serif;
+  background-color: #add8e6; /* light blue */
+  color: #003366;            /* dark blue */
+  padding: 20px;
+  margin: 0;
+  font-weight: bold;
+  padding-left: 120px;
+  padding-bottom: 0;
+}
+h2 {
+	font-family: 'Times New Roman', Times, serif;
+	background-color: #add8e6; /* light blue */
+	color: #003366;            /* dark blue */
+	padding: 20px;
+	margin: 0;
+	font-size: 16px;
+	font-style: italic;
+	padding-left: 120px;
+	padding-top: 0;
+}
+/* Style for the logo */
+#logo {
+	position: absolute;
+	top: 30px;
+	left: 10px;
+	width: 100px; /* Set the width of the logo */
+	height: 50px; /* Set the height of the logo */
+	background-image: url('src/logo.png'); /* Set the background image */
+	background-size: contain; /* Scale the background image to fit within the container */
+	background-repeat: no-repeat; /* Prevent the background image from repeating */
+}
+/* Style for authors */
+#authors span:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+/* Modal box */
+.modal-content {
+	font-family: "Times New Roman", serif;
+	padding: 20px 24px;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Heading styles */
+.modal-content h3 {
+	margin-left: 12px; /* left indentation */
+}
+
+.modal-content h4 {
+	margin-left: 12px; /* left indentation for field labels */
+}
+
+/* Dropdown */
+.modal-content select {
+	margin-left: 12px; /* indent dropdown list */
+	width: 15%;
+	padding: 4px 6px;
+	cursor: pointer;
+}
+
+/* Inputs */
+.modal-content input[type="text"] {
+	margin-left: 12px; /* indent inputs with labels */
+	width: 30%;
+	font-style: italic;
+	padding: 4px 6px;
+}
+
+/* Submit button */
+.modal-content button {
+	align-self: flex-end;
+	cursor: pointer;
+	padding: 6px 14px;
+}
+
+.modal-content button:hover {
+	background-color: #9ead85;
+}
+
+.modal-content select:hover,
+.modal-content select:focus {
+	outline: none;
+	background-color: #ecedea;
+}
