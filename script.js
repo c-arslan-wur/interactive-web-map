@@ -19,6 +19,7 @@ let activePilot;
 // Function to display the initial instructions when the project is run
 function showConfirmationMessage() {
 	document.getElementById('confirmationMessage').style.display = 'block';
+	loadBtn.textContent = "Load Map";
 }
 
 // ----------------------------------------------------------------------------------
@@ -30,11 +31,24 @@ const fileInput = document.getElementById('fileInput');
 loadBtn.addEventListener('click', async function(){
 	if (!map || polygons.length === 0) {
 		// Case 1: Initial screen → just open file input
-		fileInput.value = '';
-		fileInput.click();
-		return;
-	} else {
-		// Case 2: Map already loaded				
+		//fileInput.value = '';
+		//fileInput.click();
+		loadBtn.textContent = "Load Coastal Units";
+		try {
+			const response = await fetch("src/CoastalUnits.json");
+			if (!response.ok) throw new Error("Default JSON not found in the src/");
+			const JSONdata = await response.json();
+			document.getElementById('confirmationMessage').style.display = 'none';
+			initMap(JSONdata);
+			return;
+		} catch (err) {
+			console.error("Error loading default map:", err);
+			alert("Could not load default map. Please select your version of CoastalUnits.json");
+		}
+	}
+	//} else {
+	// Case 2: Map already loaded			
+	if (map) {
 		const saveFirst = confirm("Do you want to save Coastal Units before loading a new file?");
 
 		if (saveFirst) {
@@ -44,29 +58,33 @@ loadBtn.addEventListener('click', async function(){
 				console.error("Error saving file: ", err);
 			}
 		}
-		
-		// Remove map and its layers completely
-		if (map) {
-			map.remove();   // Destroys the Leaflet map instance
-			document.getElementById('map').style.display = 'none';
-			map = null;     // Reset reference
-		}
-		polygons = [];
-		locations = null;
-		pilotMarkers.length = 0;
-		
-		// Show confirmation screen again (initial page view)
-		showConfirmationMessage();
-		// Disable shape file loader
-		shapefileBtn.style.pointerEvents = 'none';
-		shapefileBtn.style.opacity = '0.5';
-		// Disable reset view Button
-		resetViewBtn.style.pointerEvents = 'none';
-		resetViewBtn.style.opacity = '0.5';
-		// Reset file input value and trigger file input
-		fileInput.value = '';
-		fileInput.click();
 	}
+	// Remove map and its layers completely
+	if (map) {
+		map.remove();   // Destroys the Leaflet map instance
+		document.getElementById('map').style.display = 'none';
+		map = null;     // Reset reference
+	}
+	polygons = [];
+	locations = null;
+	pilotMarkers.length = 0;
+	
+	// Show confirmation screen again (initial page view)
+	showConfirmationMessage();
+	loadBtn.textContent = "Load Coastal Units";	
+	// Disable shape file loader
+	shapefileBtn.style.pointerEvents = 'none';
+	shapefileBtn.style.opacity = '0.5';
+	// Disable reset view Button
+	resetViewBtn.style.pointerEvents = 'none';
+	resetViewBtn.style.opacity = '0.5';
+	// Disable save locations Button
+	saveLocsBtn.style.pointerEvents = 'none';
+	saveLocsBtn.style.opacity = '0.5';
+	// Reset file input value and trigger file input
+	fileInput.value = '';
+	fileInput.click();
+	//}
 });
 // Function to handle the coastal units file: geojson 
 fileInput.addEventListener('change', function onFileChange(e) {
@@ -375,7 +393,7 @@ function addDrawTools() {
 function addDrawEventListeners() {
 	// Event-listener for drawing start
 	map.on(L.Draw.Event.DRAWSTART, function () {
-		console.log("Drawing starts!");
+		//console.log("Drawing starts!");
 		drawingStart = true;
 		shapeCreated = false;
 		isEditPolygon = true;
@@ -386,7 +404,7 @@ function addDrawEventListeners() {
 	// Event-listener for drawing cancelled
 	map.on(L.Draw.Event.DRAWSTOP, function () {
 		if (drawingStart && !shapeCreated) {
-			console.log("Drawing cancelled!");
+			//console.log("Drawing cancelled!");
 			isEditPolygon = false;
 			toggleButtons(true);
 			checkIntersection(activePilot);
@@ -623,6 +641,11 @@ resetViewBtn.addEventListener('click', function() {
 // Add event listener to the save-locations-btn:
 // Save all the coastal units including user-defined and user-loaded
 const saveLocsBtn = document.getElementById('save-locations-btn');
+// Disable the reset view button
+if (!map || polygons.length === 0) {
+	saveLocsBtn.style.pointerEvents = 'none';
+	saveLocsBtn.style.opacity = '0.5';
+}
 if (!saveLocsBtn.dataset.bound) {
 	saveLocsBtn.addEventListener('click', async () => {
 		try{
@@ -856,6 +879,9 @@ async function initMap(inputJSON) {
 	// Activate reset view button
 	resetViewBtn.style.pointerEvents = 'auto';
 	resetViewBtn.style.opacity = '1';
+	// Activate save locations Button
+	saveLocsBtn.style.pointerEvents = 'auto';
+	saveLocsBtn.style.opacity = '1';
 						
 	// Reset global menu open flag
 	map.on('click', function() {
