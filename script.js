@@ -920,7 +920,7 @@ function deletePolygon() {
 
 		// Remove them from polygons array
 		polygons = polygons.filter(p => p.options.delin !== delinToRemove);
-		
+		checkIntersection(selectedPolygon.options.pilot);
 		
 		// Iterate through each pilot in the JSON array
 		locations.forEach(location => {
@@ -1437,3 +1437,4 @@ function checkIntersection(atPilot) {
 		}
 	}			
 }
+
