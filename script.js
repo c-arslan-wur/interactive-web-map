@@ -997,9 +997,13 @@ async function initMap(inputJSON) {
 	
 	// Add zoom in event to activate draw tool
 	map.on('zoomend', function () {
-		map.getZoom() >= 10
-			? addDrawTools()
-			: removeDrawTools();
+		if (map.getZoom() >= 10) {
+			addDrawTools();
+			polygons.forEach(p => !map.hasLayer(p) && p.addTo(map));
+		} else  {
+			removeDrawTools();
+			polygons.forEach(p => map.hasLayer(p) && map.removeLayer(p));
+		}
 		map.getZoom() >= 6
 			? pilotMarkers.forEach(m => map.hasLayer(m) && map.removeLayer(m))
 			: pilotMarkers.forEach(m => !map.hasLayer(m) && m.addTo(map));
