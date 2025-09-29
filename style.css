@@ -34,6 +34,13 @@ html, body {
 #load-locations-btn {
 	top: 27px;
 }
+
+/* Button to load new map */
+#load-new-locations-btn {
+	top: 27px;
+	right: 115px;
+}
+
 /* Button to save polygon data for coastal units to local drive */
 #save-locations-btn {
 	top: 52px;
@@ -42,6 +49,14 @@ html, body {
 #file-select-btn {
 	top: 77px;
 }
+/* Button to download geojson converted */
+#download-shp-to-geojson {
+	top: 77px;
+	right: 115px;
+	padding: 1px 1px;
+	border-radius: 5px;
+}
+	
 /* Button to finish modifying shape of polygon */
 #done-editing-btn {
 	top: 110px;

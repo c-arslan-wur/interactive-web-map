@@ -2,6 +2,7 @@ let map;
 let drawControl;
 let selectedPolygon = null;
 let rightClickMenu = false;
+let mapMode = "rest-coast"; //"rest-coast" or "new-map"
 
 // Setting the map view
 var originalZoom = 4;
@@ -19,59 +20,77 @@ let activePilot;
 // Function to display the initial instructions when the project is run
 function showConfirmationMessage() {
 	document.getElementById('confirmationMessage').style.display = 'block';
-	loadBtn.textContent = "Load Map";
 }
 
 // ----------------------------------------------------------------------------------
-// Function to open file selection dialog: coastal units incorporated in geojson file
+// Loading map routine: Rest-Coast Coastal Units or New Map
 // ----------------------------------------------------------------------------------
+
+// Load Rest-Coast polygons
 const loadBtn = document.getElementById('load-locations-btn');
+loadBtn.addEventListener('click', async () => {
+	
+	mapMode = "rest-coast";
+	await loadMap();
+	
+});
+// Load new blank Map
+const loadMapBtn = document.getElementById('load-new-locations-btn');
+loadMapBtn.addEventListener('click', async () => {
+	
+	mapMode = "new-map";
+	await loadMap();
+	
+});
+// Open file selection dialog: coastal units incorporated in geojson file
 const fileInput = document.getElementById('fileInput');
-
-loadBtn.addEventListener('click', async function(){
-	if (!map || polygons.length === 0) {
-		// Case 1: Initial screen → just open file input
-		//fileInput.value = '';
-		//fileInput.click();
-		loadBtn.textContent = "Load Coastal Units";
-		try {
-			const response = await fetch("src/CoastalUnits.json");
-			if (!response.ok) throw new Error("Default JSON not found in the src/");
-			const JSONdata = await response.json();
-			document.getElementById('confirmationMessage').style.display = 'none';
-			initMap(JSONdata);
-			return;
-		} catch (err) {
-			console.error("Error loading default map:", err);
-			alert("Could not load default map. Please select your version of CoastalUnits.json");
-		}
-	}
-	//} else {
-	// Case 2: Map already loaded			
-	if (map) {
-		const saveFirst = confirm("Do you want to save Coastal Units before loading a new file?");
-
-		if (saveFirst) {
+async function loadMap() {
+	
+	if (!map) {
+		// Initial screen → just open file input
+		if (mapMode == "rest-coast") {
 			try {
-				await saveJSONToFile(locations); 
+				const response = await fetch("src/CoastalUnits.json");
+				if (!response.ok) throw new Error("Default JSON not found in the src/");
+				const JSONdata = await response.json();
+				document.getElementById('confirmationMessage').style.display = 'none';
+				initMap(JSONdata);
+				return;
 			} catch (err) {
-				console.error("Error saving file: ", err);
+				console.error("Error loading default map:", err);
+				alert("Could not load default map. Please select your version of CoastalUnits.json");
 			}
+		} else if (mapMode === "new-map") {
+				document.getElementById('confirmationMessage').style.display = 'none';
+				initMap(null);
+				return;
 		}
 	}
-	// Remove map and its layers completely
+	
+	// Clean up map if already loaded			
 	if (map) {
+		if ( polygons.length !== 0 ) {
+			const saveFirst = confirm("Do you want to save Coastal Units before resetting the map?");
+
+			if (saveFirst) {
+				try {
+					await saveJSONToFile(locations); 
+				} catch (err) {
+					console.error("Error saving file: ", err);
+				}
+			}
+		}		
+		// Remove map and its layers completely
 		map.remove();   // Destroys the Leaflet map instance
 		document.getElementById('map').style.display = 'none';
 		map = null;     // Reset reference
 	}
+	
 	polygons = [];
 	locations = null;
 	pilotMarkers.length = 0;
-	
 	// Show confirmation screen again (initial page view)
 	showConfirmationMessage();
-	loadBtn.textContent = "Load Coastal Units";	
 	// Disable shape file loader
 	shapefileBtn.style.pointerEvents = 'none';
 	shapefileBtn.style.opacity = '0.5';
@@ -81,11 +100,16 @@ loadBtn.addEventListener('click', async function(){
 	// Disable save locations Button
 	saveLocsBtn.style.pointerEvents = 'none';
 	saveLocsBtn.style.opacity = '0.5';
-	// Reset file input value and trigger file input
-	fileInput.value = '';
-	fileInput.click();
-	//}
-});
+	
+	if (mapMode == "rest-coast") {
+		// Reset file input value and trigger file input
+		fileInput.value = '';
+		fileInput.click();
+	} else if (mapMode === "new-map") {
+		document.getElementById('confirmationMessage').style.display = 'none';
+		initMap(null);
+	}
+}
 // Function to handle the coastal units file: geojson 
 fileInput.addEventListener('change', function onFileChange(e) {
 	const file = e.target.files && e.target.files[0];
@@ -142,10 +166,35 @@ shapefileInput.addEventListener("change", event  => {
 		return;
 	}
 	
-	handleGeoJsonFile(shapefile);
-	
-	event.target.value = "";
+	const ext = shapefile.name.split('.').pop().toLowerCase();
+    if (ext === "geojson" || ext === "json") {
+        // Handle GeoJSON as before
+        handleGeoJsonFile(shapefile);
+    } else if (ext === "zip") {
+        // Handle zipped Shapefile
+        handleShapefile(shapefile);
+    } else {
+        alert("Unsupported file type. Please upload a .geojson or .zip shapefile.");
+    }
+
+    event.target.value = ""; // reset
 });
+
+// Function to handle shp file 
+function handleShapefile(file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        shp(e.target.result)
+            .then(function (geojson) {
+                createPolygonsFromGeoJson(geojson);
+            })
+            .catch(function (err) {
+                console.error("Invalid .shp:", err);
+                alert("Error: The selected file is not a valid .zip with .shp, .dbf, and .shx inside.");
+            });
+    };
+    reader.readAsArrayBuffer(file);
+}
 
 // Function to handle GeoJSON file upload
 function handleGeoJsonFile(file) {
@@ -231,10 +280,10 @@ function createPolygonsFromGeoJson(data) {
 		// Get coordinates for normalization and validation
 		const polygonsLoaded = [];
 		if (geometry.type === "Polygon") {
-			polygonsLoaded.push(closeRings(geometry.coordinates.map(ring => ring.map(coord => ({ lat: coord[0], lng: coord[1] })))));
+			polygonsLoaded.push(closeRings(geometry.coordinates.map(ring => ring.map(coord => ({ lat: coord[1], lng: coord[0] })))));
 		} else if (geometry.type === "MultiPolygon") {
 			geometry.coordinates.forEach(coords =>  {
-				polygonsLoaded.push(closeRings(coords.map(ring => ring.map(coord => ({ lat: coord[0], lng: coord[1] })))));
+				polygonsLoaded.push(closeRings(coords.map(ring => ring.map(coord => ({ lat: coord[1], lng: coord[0] })))));
 			});
 		}
 								
@@ -256,6 +305,36 @@ function createPolygonsFromGeoJson(data) {
 		// Show modal for this feature (user input metadata once)
 		showModal((pilot, delin, nbsBB, nbsFW) => {
 			
+			// Check if the pilot exists
+			if (!locations.find(item => item.name === pilot)) {
+				const newPilot = {
+					"name": pilot,
+					"location": { "lat":turf.centroid(feature).geometry.coordinates[1], 
+								"lng":turf.centroid(feature).geometry.coordinates[0]
+					},
+					"zoom": 13,
+					"coastalUnits": []
+				};
+				locations.push(newPilot);
+				
+				// Get pilot information dynamically
+				newPilot.description = getDescription(newPilot.name);
+				
+				// Create marker
+				const marker = L.marker([newPilot.location.lat, newPilot.location.lng], {
+					title: newPilot.name
+				});
+
+				marker.zoomLevel = newPilot.zoom; // Custom zoom level property
+
+				// Store in group
+				pilotMarkers.push(marker);
+								
+				assignMarkerEvents(marker);
+				
+				// Add marker to map by default
+				//marker.addTo(map);
+			}			
 			// Check if the coastal units exists (let user overwrite coordinates)
 			const existing = polygons.filter(p => p.options.pilot === pilot && p.options.delin === delin);
 			let targetPilot = locations.find(item => item.name === pilot);
@@ -360,6 +439,7 @@ const linkSicily = "https://drive.google.com/drive/folders/1U47bUtyYuPRs0Vtca5Tk
 const linkVenice = "https://drive.google.com/drive/folders/19TrlqrfNqgxvNzp9wrVpAMi4Wnwy6TiA?usp=drive_link";
 const linkVistula = "https://drive.google.com/drive/folders/1KUOtM3eGQcDmhWhctbXDV6UI4GvzxxdT?usp=drive_link";
 const linkWadden = "https://drive.google.com/drive/folders/1Au4Nc0JxbWRXJVaRzzOeARsf-WOxy2pp?usp=drive_link";
+const linkCustom = "https://drive.google.com/drive/folders/1RdOCVBXUBJamTdJJGmXPpsND9IoIwR9G?usp=drive_link";
 let linksToSharedFolders = {
 	"Arcachon Bay": linkArcachon,
 	"Ebro Delta": linkEbro,
@@ -369,7 +449,8 @@ let linksToSharedFolders = {
 	"Sicily Lagoon": linkSicily, 
 	"Venice Lagoon": linkVenice,
 	"Vistula Lagoon": linkVistula, 
-	"Wadden Sea": linkWadden
+	"Wadden Sea": linkWadden,
+	"New Location": linkCustom
 };
 // custom function to activate draw tool
 function addDrawTools() {
@@ -424,6 +505,39 @@ function addDrawEventListeners() {
 		
 		// Show modal for user properties
 		showModal(function (pilot_site, delineation, building_block, framework) {
+			
+			// Check if the pilot exists
+			if (!locations.find(item => item.name === pilot_site)) {
+				const feature = polygon.toGeoJSON();
+				const newPilot = {
+					"name": pilot_site,
+					"location": { "lat":turf.centroid(feature).geometry.coordinates[1], 
+								"lng":turf.centroid(feature).geometry.coordinates[0]
+					},
+					"zoom": 13,
+					"coastalUnits": []
+				};
+				locations.push(newPilot);
+				
+				// Get pilot information dynamically
+				newPilot.description = getDescription(newPilot.name);
+				
+				// Create marker
+				const marker = L.marker([newPilot.location.lat, newPilot.location.lng], {
+					title: newPilot.name
+				});
+
+				marker.zoomLevel = newPilot.zoom; // Custom zoom level property
+
+				// Store in group
+				pilotMarkers.push(marker);
+								
+				assignMarkerEvents(marker);
+				
+				// Add marker to map by default
+				//marker.addTo(map);
+			}			
+			
 			// Assign user-defined properties
 			polygon.options.pilot = pilot_site;
 			polygon.options.delin = delineation;
@@ -507,7 +621,12 @@ function showModal(callback) {
 	dflt.textContent = "Select Pilot";
 	dropdown.appendChild(dflt);
 	// Set the pilot names in the dropdown menu
-	let pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
+	let pilots;
+	if (mapMode ===  "rest-coast") {
+		pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
+	} else {
+		pilots = ["New Location"];
+	}
 	pilots.forEach(pilot => {
 		const option = document.createElement("option");
 		option.value = pilot;
@@ -524,7 +643,7 @@ function showModal(callback) {
 	infoButton.title = "Click to open shared folder for the pilot selected!"
 	
 	infoButton.addEventListener("click", () => {
-		if (dropdown.value !== activePilot) {
+		if (activePilot !== "" && dropdown.value !== activePilot && dropdown.value !== "New Location") {
 			alert("Please verify the selected pilot site!");
 			return;
 		}
@@ -547,6 +666,8 @@ function showModal(callback) {
 	dropdown.addEventListener("change", () => {
 		infoButton.disabled = dropdown.value === "";
 		tipText.style.display = dropdown.value === "" ? "none" : "inline";
+		textFieldHeading.style.display = dropdown.value === "New Location" ? 'block' : "none";
+		textField.style.display = dropdown.value === "New Location" ? 'block' : "none";
 	});
 	
 	// Add dropdown + button to wrapper
@@ -557,6 +678,19 @@ function showModal(callback) {
 	// Add wrapper to modal
 	modalContent.appendChild(dropdownWrapper);
 	
+	// New location properties
+	const textFieldHeading = document.createElement("h4");
+	textFieldHeading.textContent = "Pilot Name";
+	textFieldHeading.style.display = "none";
+	// Create input field for new location
+	const textField = document.createElement("input");
+	textField.type = "text";
+	textField.id = "textField4";
+	textField.placeholder = "e.g. Gediz Delta";
+	textField.style.display = "none";
+	modalContent.appendChild(textFieldHeading);
+	modalContent.appendChild(textField);
+		
 	// Create fields for user-defined coastal unit properties
 	let inputs = [
 		{ header: "Coastal Unit Code: ", id: "textField1", placeholder: "e.g. CU#1" },
@@ -575,7 +709,7 @@ function showModal(callback) {
 		modalContent.appendChild(textFieldHeading);
 		modalContent.appendChild(textField);
 	});
-	
+					
 	// Create submit button
 	const submitButton = document.createElement("button");
 	submitButton.textContent = "Submit";
@@ -593,6 +727,8 @@ function showModal(callback) {
 				return;
 			}
 		}
+		
+		const pilot_name = dropdown.value === "New Location" ? document.getElementById("textField4").value : dropdown.value;
 		const delineation = document.getElementById("textField1").value || "";
 		const building_block = document.getElementById("textField2").value || "";
 		const framework = document.getElementById("textField3").value || "";
@@ -600,15 +736,15 @@ function showModal(callback) {
 		// Hide the modal
 		document.body.removeChild(modalContainer);
 		// Call the callback function with the user input values
-		callback(dropdown.value, delineation, building_block, framework);
+		callback(pilot_name, delineation, building_block, framework);
 	});
 	modalContent.appendChild(submitButton);
-	
 	// Append modal content to modal container
-	modalContainer.appendChild(modalContent);
+	modalContainer.appendChild(modalContent);	
 	
 	// Append modal container to body: below the project headers before the map
 	document.body.insertBefore(modalContainer,document.getElementById("map"));
+	
 }
 // Add event listener for reset view button
 const resetViewBtn = document.getElementById('reset-view-button');
@@ -751,127 +887,98 @@ async function initMap(inputJSON) {
 	// add draw control events
 	addDrawEventListeners();
 	
-	// Assign coastal units to locations variable
-	locations = inputJSON;
-		
-	// Loop through the locations data: pilot data and coastal units associated to each pilot
-	locations.forEach(function(place) {
-		// For each pilot, define polygons from coastal unit geographical data
-		place.coastalUnits.forEach(function(polygonData) {
-			if (!polygonData.shp){			
-				
-				let polyOrMultipoly = [];
-				if (!polygonData.coords || polygonData.coords.length === 0) return;
-				if (polygonData.coords[0].lat !== undefined) {
-					polyOrMultipoly = [polygonData.coords];
-				} else {
-					polyOrMultipoly = polygonData.coords;
-				}
-				
-				let totArea = 0;
-				let tempPolygons = [];
-				polyOrMultipoly.forEach(element => {
+	if (inputJSON && inputJSON.length > 0) {
+		// Assign coastal units to locations variable
+		locations = inputJSON;
+			
+		// Loop through the locations data: pilot data and coastal units associated to each pilot
+		locations.forEach(function(place) {
+			// For each pilot, define polygons from coastal unit geographical data
+			place.coastalUnits.forEach(function(polygonData) {
+				if (!polygonData.shp){			
 					
-					if (!element || !Array.isArray(element) || element.length < 3) return;
-					
-					const first = element[0];
-					const last = element[element.length - 1];
-					if (first.lat !== last.lat || first.lng !== last.lng) {
-						element.push(first);
+					let polyOrMultipoly = [];
+					if (!polygonData.coords || polygonData.coords.length === 0) return;
+					if (polygonData.coords[0].lat !== undefined) {
+						polyOrMultipoly = [polygonData.coords];
+					} else {
+						polyOrMultipoly = polygonData.coords;
 					}
 					
-					const uniqueVertices = new Set(element.slice(0,-1).map(p => `${p.lat}, ${p.lng}`));
-					if (uniqueVertices.size < 3) return;
-					
-					if (element.length < 4) return;
-					
-					tempPolygons.push(element);
-					
-					// Calculate area 
-					const ring = element.map(ll => [ll.lng, ll.lat]); // GeoJSON format: [lng, lat]
-					const poly = turf.polygon([ring]);
-					totArea += turf.area(poly);
-				});
-				
-				// Area & zindex
-				const areaHa = Math.round(totArea / 10000); // m² → ha
-				
-				tempPolygons.forEach(coords => {
-					
-					const polygon = L.polygon(coords, {
-						pilot: place.name,
-						delin: polygonData.delin,
-						nbsBB: polygonData.nbsBB,
-						nbsFW: polygonData.nbsFW,
-						zIndex: -areaHa
-					});		
-										
-					assignPolygonEvents(polygon);
-					
-					// Add coastal units to polygons array
-					polygons.push(polygon);
-				});						
-			}	
-		});
-		// Check if coastal units at a pilot site intersects (for display color purposes)
-		// optional intersection check (implement later)
-		if (typeof checkIntersection === 'function') checkIntersection(place.name);
+					let totArea = 0;
+					let tempPolygons = [];
+					polyOrMultipoly.forEach(element => {
 						
-		// Loop through the locations and add markers to the map for pilot locations
-		// Get pilot information dynamically
-		place.description = getDescription(place.name);
-		
-		// Create marker
-		const marker = L.marker([place.location.lat, place.location.lng], {
-			title: place.name
-		});
-
-		marker.zoomLevel = place.zoom; // Custom zoom level property
-
-		// Store in group
-		pilotMarkers.push(marker);
+						if (!element || !Array.isArray(element) || element.length < 3) return;
 						
-		// Add event listener for marker mouseover
-		// Mouseover → show popup with description
-		marker.on('mouseover', function () {
-			const description = getDescription(place.name);
-			const content = '<div><strong>' + place.name + '</strong><br>' + description + '</div>';
-			marker.bindPopup(content).openPopup();
-		});
-		
-		// Add mouseout event listener
-		// Mouseout: hide info box
-		marker.on('mouseout', function () {
-			setTimeout(() => {
-				if (!marker.getPopup()._container.matches(":hover")) {
-					marker.closePopup();
-				}
-			}, 200);
-		});
-		
-		// Add event listener for marker left-click
-		// Click → zoom to site, show polygons
-		marker.on('click', function () {
-			map.setView([place.location.lat, place.location.lng], place.zoom);
-			map.closePopup();
-			map.removeLayer(marker); // Hide marker
-			
-			activePilot = place.name;
-			// Add draw control once zoomed in
-			removeDrawTools();
-			addDrawTools();
-			
-			// Show polygons for this pilot
-			polygons.forEach(function (poly) {
-				if (poly.options.pilot === place.name) {
-					poly.addTo(map);
-				}
+						const first = element[0];
+						const last = element[element.length - 1];
+						if (first.lat !== last.lat || first.lng !== last.lng) {
+							element.push(first);
+						}
+						
+						const uniqueVertices = new Set(element.slice(0,-1).map(p => `${p.lat}, ${p.lng}`));
+						if (uniqueVertices.size < 3) return;
+						
+						if (element.length < 4) return;
+						
+						tempPolygons.push(element);
+						
+						// Calculate area 
+						const ring = element.map(ll => [ll.lng, ll.lat]); // GeoJSON format: [lng, lat]
+						const poly = turf.polygon([ring]);
+						totArea += turf.area(poly);
+					});
+					
+					// Area & zindex
+					const areaHa = Math.round(totArea / 10000); // m² → ha
+					
+					tempPolygons.forEach(coords => {
+						
+						const polygon = L.polygon(coords, {
+							pilot: place.name,
+							delin: polygonData.delin,
+							nbsBB: polygonData.nbsBB,
+							nbsFW: polygonData.nbsFW,
+							zIndex: -areaHa
+						});		
+											
+						assignPolygonEvents(polygon);
+						
+						// Add coastal units to polygons array
+						polygons.push(polygon);
+					});						
+				}	
 			});
+			// Check if coastal units at a pilot site intersects (for display color purposes)
+			// optional intersection check (implement later)
+			if (typeof checkIntersection === 'function') checkIntersection(place.name);
+							
+			// Loop through the locations and add markers to the map for pilot locations
+			// Get pilot information dynamically
+			place.description = getDescription(place.name);
+			
+			// Create marker
+			const marker = L.marker([place.location.lat, place.location.lng], {
+				title: place.name
+			});
+
+			marker.zoomLevel = place.zoom; // Custom zoom level property
+
+			// Store in group
+			pilotMarkers.push(marker);
+							
+			assignMarkerEvents(marker);
+			
+			// Add marker to map by default
+			marker.addTo(map);
 		});
-		
-		// Add marker to map by default
-		marker.addTo(map);
-	});
+	} else {
+		console.log("You have blank map!");
+		activePilot = "";
+		// Initialize locations json
+		locations = [];
+	}
 	
 	// Activate shape file loader
 	shapefileBtn.style.pointerEvents = 'auto';
@@ -886,6 +993,16 @@ async function initMap(inputJSON) {
 	// Reset global menu open flag
 	map.on('click', function() {
 		rightClickMenu = false;
+	});
+	
+	// Add zoom in event to activate draw tool
+	map.on('zoomend', function () {
+		map.getZoom() >= 10
+			? addDrawTools()
+			: removeDrawTools();
+		map.getZoom() >= 6
+			? pilotMarkers.forEach(m => map.hasLayer(m) && map.removeLayer(m))
+			: pilotMarkers.forEach(m => !map.hasLayer(m) && m.addTo(map));
 	});
 	
 	// Create the legend element: Credentials for developer
@@ -1138,7 +1255,7 @@ function doneEditing() {
 
 // Disabling buttons when editing in action
 function toggleButtons(enable) {
-	const ids = ["reset-view-button", "file-select-btn", "load-locations-btn", "save-locations-btn"];
+	const ids = ["reset-view-button", "file-select-btn", "load-new-locations-btn", "load-locations-btn", "save-locations-btn"];
 	ids.forEach(id => {
 		const myBtn = document.getElementById(id);
 		if (enable) {
@@ -1245,7 +1362,10 @@ function getDescription(name) {
 					'<a href="' + linkNahal + '"target="_blank">Shared Directory</a>'
 					+ '</div>';
 		default:
-			return "Default description";
+			return '<div><strong>' + "New Pilot Location" + '</strong><br>' 
+					+ "Go to: " + 
+					'<a href="' + linkCustom + '"target="_blank">Shared Directory</a>'
+					+ '</div>';;
 	}
 }
 
@@ -1359,6 +1479,47 @@ function assignPolygonEvents (polygon) {
 	});
 }
 
+// Marker events
+function assignMarkerEvents (marker) {
+	// Add event listener for marker mouseover
+	// Mouseover → show popup with description
+	marker.on('mouseover', function () {
+		const description = getDescription(marker.options.title);
+		const content = '<div><strong>' + marker.options.title + '</strong><br>' + description + '</div>';
+		marker.bindPopup(content).openPopup();
+	});
+	
+	// Add mouseout event listener
+	// Mouseout: hide info box
+	marker.on('mouseout', function () {
+		setTimeout(() => {
+			if (!marker.getPopup()._container.matches(":hover")) {
+				marker.closePopup();
+			}
+		}, 200);
+	});
+	
+	// Add event listener for marker left-click
+	// Click → zoom to site, show polygons
+	marker.on('click', function () {
+		map.setView([marker.getLatLng().lat, marker.getLatLng().lng], marker.zoomLevel);
+		map.closePopup();
+		map.removeLayer(marker); // Hide marker
+		
+		activePilot = marker.options.title;
+		// Add draw control once zoomed in
+		removeDrawTools();
+		addDrawTools();
+		
+		// Show polygons for this pilot
+		polygons.forEach(function (poly) {
+			if (poly.options.pilot === marker.options.title) {
+				poly.addTo(map);
+			}
+		});
+	});
+}
+
 // Function to check if coastal units at a specific pilot instersects 
 function checkIntersection(atPilot) {
 	
@@ -1437,4 +1598,3 @@ function checkIntersection(atPilot) {
 		}
 	}			
 }
-

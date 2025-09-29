@@ -45,14 +45,24 @@
 	<!-- Create pilot overview button -->
     <div id="reset-view-button" class="map-btn">Pilot Overview</div>
 		
-	<!-- Create save locations button -->
-    <div id="load-locations-btn" class="map-btn">Load Map</div>
+	<!-- Create load locations button for Rest-Coast pilots -->
+    <div id="load-locations-btn" class="map-btn">Load Rest-Coast</div>	
+	
+	<!-- Create load locations button for blank map -->
+    <div id="load-new-locations-btn" class="map-btn">Load Map</div>
 	
 	<!-- Create save locations button -->
     <div id="save-locations-btn" class="map-btn">Save Coastal Units</div>
 	
-	<!-- Create geojason file selection button -->
+	<!-- Create geojson file selection button -->
     <div id="file-select-btn" class="map-btn">Load Shape File</div>
+	
+	<!-- Create geojson file converter download button -->
+	<a href="https://drive.google.com/drive/folders/1ZONu5-67IkI2ga7Z8cLwwIDFyjgub3YC?usp=drive_link" 
+	   target = "_blank" 
+	   title="Go to shared folder to download the .shp to .geojson converter">
+	   <div id="download-shp-to-geojson" class="map-btn">&#x2B07;&#xFE0F;</div>	  
+	</a>
 	
 	<!-- Create done modifying button -->
     <div id="done-editing-btn">Done Modifying<br>Coastal Unit</div>
@@ -61,13 +71,13 @@
 	<input type="file" id="fileInput" accept=".json" style="display:none;">
 	
 	<!-- File input field for loading shape files for coastal units-->
-	<input type="file" id="shapefileInput" accept=".geojson" style="display:none;">
+	<input type="file" id="shapefileInput" accept=".geojson, .zip" style="display:none;">
 	
 	<script src="libs/leaflet/leaflet.js"></script>
 	<script src="libs/leaflet/leaflet.draw.js"></script>
 	<script src="libs/turf/turf.min.js"></script>
 	<script src="libs/geoman/leaflet-geoman.js"></script>
-	
+	<script src="libs/shape/shp.min.js"></script>
 	<script src="script.js"></script>
 </body>
 </html>
