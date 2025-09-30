@@ -1149,6 +1149,12 @@ function editPolygon() {
 			modalContent.appendChild(input);
 		});
 		
+		// Info text + buttons wrapper
+    	const buttonWrapper = document.createElement("div");
+    	buttonWrapper.style.display = "flex";
+    	buttonWrapper.style.alignItems = "right";
+    	buttonWrapper.style.gap = "10px";
+		
 		// Create button to direct users to shared folders
 		const infoButton = document.createElement("button");
 		infoButton.textContent = "Go to Shared Folder";
@@ -1192,11 +1198,6 @@ function editPolygon() {
 			callback(delineation, building_block, framework);
 		});
 		
-		// Info text + buttons wrapper
-    	const buttonWrapper = document.createElement("div");
-    	buttonWrapper.style.display = "flex";
-    	buttonWrapper.style.alignItems = "right";
-    	buttonWrapper.style.gap = "10px";
 		// Add elements to wrapper
     	buttonWrapper.appendChild(infoButton);
     	buttonWrapper.appendChild(tipText);
