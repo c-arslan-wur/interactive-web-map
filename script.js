@@ -46,7 +46,7 @@ loadMapBtn.addEventListener('click', async () => {
 const fileInput = document.getElementById('fileInput');
 async function loadMap() {
 	
-	if (!map || (mapMode === "rest-coast" && map && polygons.length === 0)) {
+	if (!map) {
 		// Initial screen → just open file input
 		if (mapMode == "rest-coast") {
 			try {
@@ -80,7 +80,6 @@ async function loadMap() {
 				}
 			}
 		} 
-
 		
 		// Remove map and its layers completely
 		map.remove();   // Destroys the Leaflet map instance
@@ -94,16 +93,30 @@ async function loadMap() {
 	// Show confirmation screen again (initial page view)
 	showConfirmationMessage();
 	// Disable shape file loader
-	shapefileBtn.style.pointerEvents = 'none';
-	shapefileBtn.style.opacity = '0.5';
+	//shapefileBtn.style.pointerEvents = 'none';
+	//shapefileBtn.style.opacity = '0.5';
 	// Disable reset view Button
-	resetViewBtn.style.pointerEvents = 'none';
-	resetViewBtn.style.opacity = '0.5';
+	//resetViewBtn.style.pointerEvents = 'none';
+	//resetViewBtn.style.opacity = '0.5';
 	// Disable save locations Button
-	saveLocsBtn.style.pointerEvents = 'none';
-	saveLocsBtn.style.opacity = '0.5';
+	//saveLocsBtn.style.pointerEvents = 'none';
+	//saveLocsBtn.style.opacity = '0.5';
+	toggleButtons(false);
 	
 	if (mapMode == "rest-coast") {
+		if (polygons.length === 0) {
+			try {
+				const response = await fetch("src/CoastalUnits.json");
+				if (!response.ok) throw new Error("Default JSON not found in the src/");
+				const JSONdata = await response.json();
+				document.getElementById('confirmationMessage').style.display = 'none';
+				initMap(JSONdata);
+				return;
+			} catch (err) {
+				console.error("Error loading default map:", err);
+				alert("Could not load default map. Please select your version of CoastalUnits.json");
+			}
+		}
 		// Reset file input value and trigger file input
 		fileInput.value = '';
 		fileInput.click();
@@ -983,15 +996,16 @@ async function initMap(inputJSON) {
 	}
 	
 	// Activate shape file loader
-	shapefileBtn.style.pointerEvents = 'auto';
-	shapefileBtn.style.opacity = '1';
+	//shapefileBtn.style.pointerEvents = 'auto';
+	//shapefileBtn.style.opacity = '1';
 	// Activate reset view button
-	resetViewBtn.style.pointerEvents = 'auto';
-	resetViewBtn.style.opacity = '1';
+	//resetViewBtn.style.pointerEvents = 'auto';
+	//resetViewBtn.style.opacity = '1';
 	// Activate save locations Button
-	saveLocsBtn.style.pointerEvents = 'auto';
-	saveLocsBtn.style.opacity = '1';
-						
+	//saveLocsBtn.style.pointerEvents = 'auto';
+	//saveLocsBtn.style.opacity = '1';
+	toggleButtons(true);
+	
 	// Reset global menu open flag
 	map.on('click', function() {
 		rightClickMenu = false;
@@ -1152,7 +1166,7 @@ function editPolygon() {
 		// Info text + buttons wrapper
     	const buttonWrapper = document.createElement("div");
     	buttonWrapper.style.display = "flex";
-    	buttonWrapper.style.alignItems = "right";
+    	buttonWrapper.style.alignItems = "center";
     	buttonWrapper.style.gap = "10px";
 		
 		// Create button to direct users to shared folders
@@ -1180,7 +1194,6 @@ function editPolygon() {
 		tipText.style.fontStyle = "italic";
 		tipText.style.fontSize = "14px";
 		tipText.style.marginLeft = "5px";
-		tipText.style.display = "none"; 
 		
 		// Create submit button for user to make changes
 		const submitButton = document.createElement("button");
@@ -1302,7 +1315,7 @@ function doneEditing() {
 
 // Disabling buttons when editing in action
 function toggleButtons(enable) {
-	const ids = ["reset-view-button", "file-select-btn", "load-new-locations-btn", "load-locations-btn", "save-locations-btn"];
+	const ids = ["reset-view-button", "load-locations-btn", "load-new-locations-btn", "save-locations-btn", "file-select-btn"];
 	ids.forEach(id => {
 		const myBtn = document.getElementById(id);
 		if (enable) {
@@ -1645,3 +1658,4 @@ function checkIntersection(atPilot) {
 		}
 	}			
 }
+
