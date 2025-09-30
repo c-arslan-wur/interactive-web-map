@@ -26,6 +26,10 @@ html, body {
   text-align: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }		
+.map-btn:hover {
+	background-color: #a2c4c9;
+}
+
 /* Reset view button brigs an overview window of the pilots */
 #reset-view-button {
 	top: 2px;
@@ -38,7 +42,7 @@ html, body {
 /* Button to load new map */
 #load-new-locations-btn {
 	top: 27px;
-	right: 125px;
+	right: 140px;
 }
 
 /* Button to save polygon data for coastal units to local drive */
@@ -52,8 +56,7 @@ html, body {
 /* Button to download geojson converted */
 #download-shp-to-geojson {
 	top: 77px;
-	right: 125px;
-	border-radius: 5px;
+	right: 140px;
 }
 	
 /* Button to finish modifying shape of polygon */
@@ -62,9 +65,7 @@ html, body {
 	display: none;
 	z-index: 3000;
 }
-#done-editing-btn:hover {
-	background-color: #a2c4c9;
-}
+
 /* Styling for the headers */
 h1 {
   font-family: 'Times New Roman', Times, serif;
@@ -151,4 +152,5 @@ h2 {
 .modal-content select:focus {
 	outline: none;
 	background-color: #ecedea;
+
 }
