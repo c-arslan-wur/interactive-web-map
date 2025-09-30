@@ -18,7 +18,7 @@ html, body {
   right: 10px;
   background-color: #F0FFFF;
   border: 1px solid #ccc;
-  padding: 2px 5px;
+  padding: 2px 15px;
   border-radius: 3px;
   cursor: pointer;
   font-size: 12px;
@@ -154,4 +154,5 @@ h2 {
 	background-color: #ecedea;
 
 }
+
 
