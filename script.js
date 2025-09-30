@@ -69,6 +69,7 @@ async function loadMap() {
 	
 	// Clean up map if already loaded			
 	if (map) {
+		
 		if ( polygons.length !== 0 ) {
 			const saveFirst = confirm("Do you want to save Coastal Units before resetting the map?");
 
@@ -93,30 +94,17 @@ async function loadMap() {
 	// Show confirmation screen again (initial page view)
 	showConfirmationMessage();
 	// Disable shape file loader
-	//shapefileBtn.style.pointerEvents = 'none';
-	//shapefileBtn.style.opacity = '0.5';
+	shapefileBtn.style.pointerEvents = 'none';
+	shapefileBtn.style.opacity = '0.5';
 	// Disable reset view Button
-	//resetViewBtn.style.pointerEvents = 'none';
-	//resetViewBtn.style.opacity = '0.5';
+	resetViewBtn.style.pointerEvents = 'none';
+	resetViewBtn.style.opacity = '0.5';
 	// Disable save locations Button
-	//saveLocsBtn.style.pointerEvents = 'none';
-	//saveLocsBtn.style.opacity = '0.5';
-	toggleButtons(false);
+	saveLocsBtn.style.pointerEvents = 'none';
+	saveLocsBtn.style.opacity = '0.5';
+	//toggleButtons(false);
 	
 	if (mapMode == "rest-coast") {
-		if (polygons.length === 0) {
-			try {
-				const response = await fetch("src/CoastalUnits.json");
-				if (!response.ok) throw new Error("Default JSON not found in the src/");
-				const JSONdata = await response.json();
-				document.getElementById('confirmationMessage').style.display = 'none';
-				initMap(JSONdata);
-				return;
-			} catch (err) {
-				console.error("Error loading default map:", err);
-				alert("Could not load default map. Please select your version of CoastalUnits.json");
-			}
-		}
 		// Reset file input value and trigger file input
 		fileInput.value = '';
 		fileInput.click();
@@ -655,7 +643,7 @@ function showModal(callback) {
 	const infoButton = document.createElement("button");
 	infoButton.textContent = "Go to Shared Folder";
 	infoButton.disabled = true;
-	infoButton.title = "Click to open shared folder for the pilot selected!"
+	infoButton.title = "Click to open the shared folder for this site!"
 	
 	infoButton.addEventListener("click", () => {
 		if (activePilot !== "" && dropdown.value !== activePilot && dropdown.value !== "New Location") {
@@ -669,9 +657,9 @@ function showModal(callback) {
 	
 	// Create inline tip text
 	const tipText = document.createElement("span");
-	tipText.innerHTML = 'Go to Pilot\'s shared folder to select the pilot application data and copy the link below.<br>' +
+	tipText.innerHTML = 'Go to the shared folder to select the framework application data and copy the link below.<br>' +
 						  'Please use e.g. "The NB3 Instance newUnit1" to assign new data to the Coastal Unit.';
-	tipText.style.color = "rgba(255, 0, 0, 0.6)";
+	tipText.style.color = "#003366";
 	tipText.style.fontStyle = "italic";
 	tipText.style.fontSize = "14px";
 	tipText.style.marginLeft = "5px";
@@ -989,22 +977,22 @@ async function initMap(inputJSON) {
 			marker.addTo(map);
 		});
 	} else {
-		console.log("You have blank map!");
+		//console.log("You have blank map!");
 		activePilot = "";
 		// Initialize locations json
 		locations = [];
 	}
 	
 	// Activate shape file loader
-	//shapefileBtn.style.pointerEvents = 'auto';
-	//shapefileBtn.style.opacity = '1';
+	shapefileBtn.style.pointerEvents = 'auto';
+	shapefileBtn.style.opacity = '1';
 	// Activate reset view button
-	//resetViewBtn.style.pointerEvents = 'auto';
-	//resetViewBtn.style.opacity = '1';
+	resetViewBtn.style.pointerEvents = 'auto';
+	resetViewBtn.style.opacity = '1';
 	// Activate save locations Button
-	//saveLocsBtn.style.pointerEvents = 'auto';
-	//saveLocsBtn.style.opacity = '1';
-	toggleButtons(true);
+	saveLocsBtn.style.pointerEvents = 'auto';
+	saveLocsBtn.style.opacity = '1';
+	//toggleButtons(true);
 	
 	// Reset global menu open flag
 	map.on('click', function() {
@@ -1166,15 +1154,14 @@ function editPolygon() {
 		// Info text + buttons wrapper
     	const buttonWrapper = document.createElement("div");
     	buttonWrapper.style.display = "flex";
+    	buttonWrapper.style.marginLeft = "12px";
     	buttonWrapper.style.alignItems = "center";
-    	buttonWrapper.style.gap = "10px";
+		buttonWrapper.style.marginTop = "10px"; 
 		
 		// Create button to direct users to shared folders
 		const infoButton = document.createElement("button");
 		infoButton.textContent = "Go to Shared Folder";
-		mapMode = "rest-coast" 
-			? infoButton.title = "Click to open shared folder for the selected pilot!"
-			: infoButton.title = "Click to open shared folder for this location!";
+		infoButton.title = "Click to open the shared folder for this site!";
 		const pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
 		let linkTo = "";
 		infoButton.addEventListener("click", () => {
@@ -1188,12 +1175,18 @@ function editPolygon() {
 		
 		// Create inline tip text
 		const tipText = document.createElement("span");
-		tipText.innerHTML = 'Go to shared directory to select the pilot application data and copy the link below.<br>' +
+		tipText.innerHTML = 'Go to the shared directory to select the framework application data and copy the link below.<br>' +
 							'Please use, e.g. "The NB3 Instance newUnit1", to assign new data file to the Coastal Unit.';
-		tipText.style.color = "rgba(255, 0, 0, 0.6)";
+		tipText.style.color = "#003366";
 		tipText.style.fontStyle = "italic";
 		tipText.style.fontSize = "14px";
 		tipText.style.marginLeft = "5px";
+		
+		// Add elements to wrapper
+    	buttonWrapper.appendChild(infoButton);
+    	buttonWrapper.appendChild(tipText);
+    	// Add wrapper to modal
+    	modalContent.appendChild(buttonWrapper);
 		
 		// Create submit button for user to make changes
 		const submitButton = document.createElement("button");
@@ -1210,16 +1203,7 @@ function editPolygon() {
 			// Call the callback function with the user input values
 			callback(delineation, building_block, framework);
 		});
-		
-		// Add elements to wrapper
-    	buttonWrapper.appendChild(infoButton);
-    	buttonWrapper.appendChild(tipText);
-    	buttonWrapper.appendChild(submitButton);
-    	
-    	// Add wrapper to modal
-    	modalContent.appendChild(buttonWrapper);
-			
-		//modalContent.appendChild(submitButton);
+    	modalContent.appendChild(submitButton);
 		
 		modalContainer.appendChild(modalContent);
 		
