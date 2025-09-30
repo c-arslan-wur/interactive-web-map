@@ -24,40 +24,40 @@
 		<p>New users of this tool can refer to the following documents for more detailed information:</p>
 		<p>&emsp;1. <a href="https://rest-coast.eu/storage/app/uploads/public/67f/653/8eb/67f6538eb6208362862149.pdf" target="_blank">Deliverable 4.2</a>.</p>
 		<p>&emsp;2. <a href="https://doi.org/10.1016/j.nbsj.2025.100259" target="_blank">Scientific Article</a>.</p>
-		<p>This tool complements the framework application data for each existing Coastal Unit.</p>
-		<p>For existing Coastal Units, the users can access the application data directly and work on the shared file in a collaborative manner.</p>
-		<p>When mapping a new Coastal Unit, there exists a template file for framework application that can accessed through the shared project directory.</p>
-		<p>&emsp;&#x1F4C2; Users can access the shared directory through <a href="https://drive.google.com/drive/folders/12YRxJpMza34m5XKg1Zfz-BdUYtS_Dnqw?usp=drive_link" target="_blank">this link</a>.</p>
-		<p>The above link ensures access to all nine pilot sites, each of which includes: </p>
-		<p>&emsp;&#x279C; the framework application data for <b>Existing Pilots</b></p>
-		<p>&emsp;&#x279C; the template data sheets for <b>New Locations</b></p>
+		<p>This tool complements the framework application data for any Coastal Unit.</p>
+		<p>&emsp;&#x279C; For existing Coastal Units, the users can directly work on the application data in a collaborative manner.</p>
+		<p>&emsp;&#x279C; When mapping a new Coastal Unit, the users can assign a template framework application sheet for collaboration.</p>
+		<p>&#x1F4C2; Users can access the existing and template data sheets through <a href="https://drive.google.com/drive/folders/12YRxJpMza34m5XKg1Zfz-BdUYtS_Dnqw?usp=drive_link" target="_blank">the shared directory</a>.</p>
+		<p>This link ensures access to shared folders for all nine Rest-Coast pilot sites as well as new locations, each of which includes: </p>
+		<p>&emsp;&#x279C; the framework application data for <b>Existing Coastal Units</b></p>
+		<p>&emsp;&#x279C; the template data sheets for <b>New Coastal Units</b></p>
 		<p><span style="font-weight: bold;">IMPORTANT: </span>If an existing Coastal Unit is modified (e.g. metadata, shape...), or a new Coastal Unit is identified (e.g. by drawing a polygon or loading a shape file):</p>
 		<p>&emsp;1.Use Save Coastal Units button to download the most recent version of the Coastal Units.</p>
 		<p>&emsp;<span style="font-style: italic;">Save using the default file name, which includes a date stamp for version control, i.e. CoastalUnits_YYYY-MM-DD_HH-MM.json.</span></p>
 		<p>&emsp;2.Upload this new version to the shared project directory at: <a href="https://wageningenur4-my.sharepoint.com/:f:/r/personal/cengiz_arslan_wur_nl/Documents/The%20Interactive%20Web%20Map/SharedDirectory/upToDateCoastalUnits?csf=1&web=1&e=zgUlnW" target="_blank">upToDateCoastalUnits</a></p>
 		<p>&emsp;<span style="font-style: italic;">If access is denied, please contact <a href="mailto:cengiz.arslan@wur.nl">cengiz.arslan@wur.nl</a> for folder access permission.</span></p>
-		<p>Continue with the Interactive Web Map:</p>
-		<p>&emsp;&#x1F4CD; Use <b>Load Rest-Coast</b> button to initialize the map with Rest-Coast pilots.</p>	
-		<p>&emsp;&#x1F5FA; Use <b>Load Map</b> button to launch a blank map.</p>
+		<p>Users can continue with the Interactive Web Map through:</p>
+		<p>&emsp;&#x1F4CD; <b>Load Rest-Coast</b> button to initialize the map with the Rest-Coast pilots.</p>	
+		<p>&emsp;&#x1F5FA; <b>Load Map</b> button to launch a blank map.</p>
 	</div>
 	
 	<!-- Create a div to hold the map -->
 	<div id="map"></div>
 	
 	<!-- Create pilot overview button -->
-    <div id="reset-view-button" class="map-btn">&#x1F501;Pilot Overview</div>
+    <div id="reset-view-button" class="map-btn">&#x1F501; Pilot Overview</div>
 		
 	<!-- Create load locations button for Rest-Coast pilots -->
-    <div id="load-locations-btn" class="map-btn">&#x1F4CD;Load Rest-Coast</div>	
+    <div id="load-locations-btn" class="map-btn">&#x1F4CD; Load Rest-Coast</div>	
 	
 	<!-- Create load locations button for blank map -->
-    <div id="load-new-locations-btn" class="map-btn">&#x1F5FA;Load Map</div>
+    <div id="load-new-locations-btn" class="map-btn">&#x1F5FA; Load Map</div>
 	
 	<!-- Create save locations button -->
-    <div id="save-locations-btn" class="map-btn">&#x1F4BE;Save Coastal Units</div>
+    <div id="save-locations-btn" class="map-btn">&#x1F4BE; Save Coastal Units</div>
 	
 	<!-- Create geojson file selection button -->
-    <div id="file-select-btn" class="map-btn">&#x1F4C2;Load Shape File</div>
+    <div id="file-select-btn" class="map-btn">&#x1F4C2; Load Shape File</div>
 	
 	<!-- Create geojson file converter download button -->
 	<a href="https://drive.google.com/drive/folders/1ZONu5-67IkI2ga7Z8cLwwIDFyjgub3YC?usp=drive_link" 
@@ -67,7 +67,7 @@
 	</a>
 	
 	<!-- Create done modifying button -->
-    <div id="done-editing-btn">Done Modifying<br>Coastal Unit</div>
+    <div id="done-editing-btn" class="map-btn">&#x2705; Done Modifying Coastal Unit</div>
 	
 	<!-- File input field for initial loading of coastal units-->
 	<input type="file" id="fileInput" accept=".json" style="display:none;">

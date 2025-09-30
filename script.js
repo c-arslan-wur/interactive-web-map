@@ -46,7 +46,7 @@ loadMapBtn.addEventListener('click', async () => {
 const fileInput = document.getElementById('fileInput');
 async function loadMap() {
 	
-	if (!map || (mapMode === "rest-coast" && map && polygons.length === 0) {
+	if (!map || (mapMode === "rest-coast" && map && polygons.length === 0)) {
 		// Initial screen → just open file input
 		if (mapMode == "rest-coast") {
 			try {

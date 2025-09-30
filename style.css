@@ -38,7 +38,7 @@ html, body {
 /* Button to load new map */
 #load-new-locations-btn {
 	top: 27px;
-	right: 115px;
+	right: 125px;
 }
 
 /* Button to save polygon data for coastal units to local drive */
@@ -52,25 +52,13 @@ html, body {
 /* Button to download geojson converted */
 #download-shp-to-geojson {
 	top: 77px;
-	right: 115px;
-	padding: 1px 1px;
+	right: 125px;
 	border-radius: 5px;
 }
 	
 /* Button to finish modifying shape of polygon */
 #done-editing-btn {
 	top: 110px;
-	position: absolute;
-	right: 10px;
-	background-color: #F0FFFF;
-	border: 1px solid #ccc;
-	padding: 3px 10px;
-	border-radius: 3px;
-	cursor: pointer;
-	font-size: 12px;
-	font-family: 'Times New Roman', Times, serif;
-	text-align: center;
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 	display: none;
 	z-index: 3000;
 }
