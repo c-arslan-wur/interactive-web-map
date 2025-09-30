@@ -46,7 +46,7 @@ loadMapBtn.addEventListener('click', async () => {
 const fileInput = document.getElementById('fileInput');
 async function loadMap() {
 	
-	if (!map) {
+	if (!map || (mapMode === "rest-coast" && map && polygons.length === 0) {
 		// Initial screen → just open file input
 		if (mapMode == "rest-coast") {
 			try {
@@ -79,7 +79,9 @@ async function loadMap() {
 					console.error("Error saving file: ", err);
 				}
 			}
-		}		
+		} 
+
+		
 		// Remove map and its layers completely
 		map.remove();   // Destroys the Leaflet map instance
 		document.getElementById('map').style.display = 'none';
@@ -439,7 +441,7 @@ const linkSicily = "https://drive.google.com/drive/folders/1U47bUtyYuPRs0Vtca5Tk
 const linkVenice = "https://drive.google.com/drive/folders/19TrlqrfNqgxvNzp9wrVpAMi4Wnwy6TiA?usp=drive_link";
 const linkVistula = "https://drive.google.com/drive/folders/1KUOtM3eGQcDmhWhctbXDV6UI4GvzxxdT?usp=drive_link";
 const linkWadden = "https://drive.google.com/drive/folders/1Au4Nc0JxbWRXJVaRzzOeARsf-WOxy2pp?usp=drive_link";
-const linkCustom = "https://drive.google.com/drive/folders/1RdOCVBXUBJamTdJJGmXPpsND9IoIwR9G?usp=drive_link";
+const linkCustom = "https://drive.google.com/drive/folders/1tpR72tFvh6z7l4-61kEfUG1BPwvVxRID?usp=drive_link";
 let linksToSharedFolders = {
 	"Arcachon Bay": linkArcachon,
 	"Ebro Delta": linkEbro,
@@ -1147,6 +1149,33 @@ function editPolygon() {
 			modalContent.appendChild(input);
 		});
 		
+		// Create button to direct users to shared folders
+		const infoButton = document.createElement("button");
+		infoButton.textContent = "Go to Shared Folder";
+		mapMode = "rest-coast" 
+			? infoButton.title = "Click to open shared folder for the selected pilot!"
+			: infoButton.title = "Click to open shared folder for this location!";
+		const pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
+		let linkTo = "";
+		infoButton.addEventListener("click", () => {
+			if (pilots.includes(pilt)) {
+				linkTo = linksToSharedFolders[pilt];
+			} else {
+				linkTo = linksToSharedFolders["New Location"];
+			}
+			window.open(linkTo, "_blank");
+		});
+		
+		// Create inline tip text
+		const tipText = document.createElement("span");
+		tipText.innerHTML = 'Go to shared directory to select the pilot application data and copy the link below.<br>' +
+							'Please use, e.g. "The NB3 Instance newUnit1", to assign new data file to the Coastal Unit.';
+		tipText.style.color = "rgba(255, 0, 0, 0.6)";
+		tipText.style.fontStyle = "italic";
+		tipText.style.fontSize = "14px";
+		tipText.style.marginLeft = "5px";
+		tipText.style.display = "none"; 
+		
 		// Create submit button for user to make changes
 		const submitButton = document.createElement("button");
 		submitButton.textContent = "Submit";
@@ -1162,8 +1191,21 @@ function editPolygon() {
 			// Call the callback function with the user input values
 			callback(delineation, building_block, framework);
 		});
+		
+		// Info text + buttons wrapper
+    	const buttonWrapper = document.createElement("div");
+    	buttonWrapper.style.display = "flex";
+    	buttonWrapper.style.alignItems = "right";
+    	buttonWrapper.style.gap = "10px";
+		// Add elements to wrapper
+    	buttonWrapper.appendChild(infoButton);
+    	buttonWrapper.appendChild(tipText);
+    	buttonWrapper.appendChild(submitButton);
+    	
+    	// Add wrapper to modal
+    	modalContent.appendChild(buttonWrapper);
 			
-		modalContent.appendChild(submitButton);
+		//modalContent.appendChild(submitButton);
 		
 		modalContainer.appendChild(modalContent);
 		
