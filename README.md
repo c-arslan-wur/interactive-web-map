@@ -1,9 +1,10 @@
 # [🗺️ Interactive Web Map](https://c-arslan-wur.github.io/interactive-web-map/)
 
 This ***Interactive Web Map*** tool is an HTML project based on JavaScript. It incorporates [Leaflet](https://leafletjs.com/) to design an interactive map to streamline the collective application of **the NB<sup>3</sup> Building Blocks Framework**. The framework is developed by [Earth Systems and Global Change Group](https://www.wur.nl/en/research-results/chair-groups/environmental-sciences/earth-systems-and-global-change-group.htm) at Wageningen University & Research as part of Task 4.2 in the H2020 [Rest-Coast](https://rest-coast.eu/) project.
-
-<img src="src/wur.png" width="30"/>
-<img src="src/rest-coast.jpg" width="30"/>
+<p float="left>
+  <img src="src/wur.png" width="45%"/>
+  <img src="src/rest-coast.jpg" width="45%"/>
+</p>
 
 For detailed information about the framework, please refer to;
 - [Nature-based building blocks (NB<sup>3</sup>) framework for scaling up nature-based solutions in coastal adaptation](https://doi.org/10.1016/j.nbsj.2025.100259)
