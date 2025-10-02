@@ -25,11 +25,11 @@ This tool is developed by [C. Arslan](mailto:cengiz.arslan@wur.nl) (Wageningen U
 
 ***The Interactive Web Map*** tool is a project that is in progress, subject to further development aligned with the needs of and feedback from the users of the tool. It is higly recommended to contact the developer of this script for potential upgrades and improvements in a collaborative manner.
 
-Cengiz Arslan
-Earth Systems and Global Change Group
-Wageningen University & Research
-[e-mail](mailto:cengiz.arslan@wur.nl)
-
-OWNERS:
-Cengiz Arslan, PhD Researcher, Wageningen University & Research
-Jantsje van Loon-Steensma, Task 4.2 Leader, Wageningen University & Research 
+Cengiz Arslan  
+Earth Systems and Global Change Group  
+Wageningen University & Research  
+[e-mail](mailto:cengiz.arslan@wur.nl)  
+  
+OWNERS:  
+Cengiz Arslan, PhD Researcher, Wageningen University & Research  
+Jantsje van Loon-Steensma, Task 4.2 Leader, Wageningen University & Research  
