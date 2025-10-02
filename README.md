@@ -2,8 +2,8 @@
 
 This ***Interactive Web Map*** tool is an HTML project based on JavaScript. It incorporates [Leaflet](https://leafletjs.com/) to design an interactive map to streamline the collective application of **the NB<sup>3</sup> Building Blocks Framework**. The framework is developed by [Earth Systems and Global Change Group](https://www.wur.nl/en/research-results/chair-groups/environmental-sciences/earth-systems-and-global-change-group.htm) at Wageningen University & Research as part of Task 4.2 in the H2020 [Rest-Coast](https://rest-coast.eu/) project.
 <p float="left" >
-  <img src="src/wur.png" width="45%"/>
-  <img src="src/rest-coast.jpg" width="45%"/>
+  <img src="src/wur.png" width="49%"/>
+  <img src="src/rest-coast.jpg" width="49%"/>
 </p>
 
 For detailed information about the framework, please refer to;
@@ -16,7 +16,10 @@ This tool is founded on the Coastal Units that resulted from the application of 
 3. Map new Coastal Units at each pilot by collaboratively applying the framework to identify new Nature-based Building Blocks,
 4. Scale-out the application of the framework beyond Rest-Coast by defining new sites and Coastal Units.
 
-![Fig. 1: The NB<sup>3</sup> Framework](src/NB3FW.png)
+<p align="center">
+  <img src="src/NB3FW.png" width="60%"/>
+  <br><em>Fig.1: The NB<sup>3</sup> Framework</em>
+</p>
 
 This tool is developed by [C. Arslan](mailto:cengiz.arslan@wur.nl) (Wageningen University & Research) to enable effective collaboration among the partners and stakeholders of Task 4.2 in the Rest-Coast project. As part of *the Participative Downscaling Approach* method of the framework, the tool streamlines the process of working together on geospatial data, contributing to stakeholder processes as a co-production tool. So, the design of the tool facilitates participation-based identification of NbS-driven restoration processes as a generic approach beyond the scope Rest-Coast.
 
