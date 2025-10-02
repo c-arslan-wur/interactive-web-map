@@ -1,6 +1,8 @@
-# Interactive Web Map
+# [🗺️ Interactive Web Map](https://c-arslan-wur.github.io/interactive-web-map/)
 
-This ***Interactive Web Map*** tool is an HTML project based on JavaScript. It incorporates [Leaflet](https://leafletjs.com/) to design an interactive map to streamline the collective application of **the NB<sup>3</sup> Building Blocks Framework**. The framework is developed as part of the H2020 [Rest-Coast](https://rest-coast.eu/) project.
+This ***Interactive Web Map*** tool is an HTML project based on JavaScript. It incorporates [Leaflet](https://leafletjs.com/) to design an interactive map to streamline the collective application of **the NB<sup>3</sup> Building Blocks Framework**. The framework is developed by [Earth Systems and Global Change Group](https://www.wur.nl/en/research-results/chair-groups/environmental-sciences/earth-systems-and-global-change-group.htm) at Wageningen University & Research as part of Task 4.2 in the H2020 [Rest-Coast](https://rest-coast.eu/) project.
+
+![WUR](src/wageningen.png) ![RC](src/rest-coast.jpg)
 
 For detailed information about the framework, please refer to;
 - [Nature-based building blocks (NB<sup>3</sup>) framework for scaling up nature-based solutions in coastal adaptation](https://doi.org/10.1016/j.nbsj.2025.100259)
@@ -12,7 +14,7 @@ This tool is founded on the Coastal Units that resulted from the application of 
 3. Map new Coastal Units at each pilot by collaboratively applying the framework to identify new Nature-based Building Blocks,
 4. Scale-out the application of the framework beyond Rest-Coast by defining new sites and Coastal Units.
 
-![Fig. 1: The NB<sup>3</sup> Framework](src/NB3FW.tiff)
+![Fig. 1: The NB<sup>3</sup> Framework](src/NB3FW.png)
 
 This tool is developed by [C. Arslan](mailto:cengiz.arslan@wur.nl) (Wageningen University & Research) to enable effective collaboration among the partners and stakeholders of Task 4.2 in the Rest-Coast project. As part of *the Participative Downscaling Approach* method of the framework, the tool streamlines the process of working together on geospatial data, contributing to stakeholder processes as a co-production tool. So, the design of the tool facilitates participation-based identification of NbS-driven restoration processes as a generic approach beyond the scope Rest-Coast.
 
