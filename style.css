@@ -66,6 +66,19 @@ html, body {
 	z-index: 3000;
 }
 
+/* Button to open Read me file in a new tab */
+#info-btn {
+	background-color: #add8e6;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	vertical-align: super;
+	font-size: 20px;
+	padding: 0;
+}
+#info-btn:hover {
+	background-color: #a2c4c9;
+}
 /* Styling for the headers */
 h1 {
   font-family: 'Times New Roman', Times, serif;
@@ -76,6 +89,7 @@ h1 {
   font-weight: bold;
   padding-left: 120px;
   padding-bottom: 0;
+  padding-right: 0;
 }
 h2 {
 	font-family: 'Times New Roman', Times, serif;
@@ -88,6 +102,7 @@ h2 {
 	padding-left: 120px;
 	padding-top: 0;
 }
+
 /* Style for the logo */
 #logo {
 	position: absolute;

@@ -8,11 +8,15 @@
 	<link rel="stylesheet" href="libs/leaflet/leaflet.draw.css">
 	<link rel="stylesheet" href="style.css">
 	<link rel="icon" type="image/x-icon" href="icon.ico">
-    
+	<link rel="stylesheet" href="libs/marked/github-markdown.css">
+	    
 </head>
 <body>
 	<!-- Place headers and logo -->
-	<h1>The Participative Application of the NB<sup>3</sup> Framework</h1>
+	<h1>
+		The Participative Application of the NB<sup>3</sup> Framework
+		<button id="info-btn" title="About the Interactive Web Map" onclick="openReadme()">&#9432;</button>
+	</h1>
 	<h2 id="authors"><span>C. Arslan et al., 2025</span> </h2>
 	<div id="logo"></div>
 	
@@ -80,8 +84,7 @@
 	<script src="libs/turf/turf.min.js"></script>
 	<script src="libs/geoman/leaflet-geoman.js"></script>
 	<script src="libs/shape/shp.min.js"></script>
+	<script src="libs/marked/marked.js"></script>
 	<script src="script.js"></script>
 </body>
-
 </html>
-

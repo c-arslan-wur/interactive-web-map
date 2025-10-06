@@ -16,6 +16,8 @@ var isEditPolygon = false;
 // Create a marker group to manage them globally
 var pilotMarkers = [];
 let activePilot;
+// Placeholder for Readme tab
+let ReadmeTab = null;
 
 // Function to display the initial instructions when the project is run
 function showConfirmationMessage() {
@@ -1643,3 +1645,60 @@ function checkIntersection(atPilot) {
 	}			
 }
 
+// Function to open readme document in a new tab
+async function openReadme() {
+	// Check if Readme tab already exists, and if so, use this tab
+	if (ReadmeTab && !ReadmeTab.closed) {
+		ReadmeTab.focus();
+		return;
+	}
+	
+	ReadmeTab = window.open();
+	const response = await fetch("https://raw.githubusercontent.com/c-arslan-wur/interactive-web-map/refs/heads/main/README.md");
+	const markedTxt = await response.text();
+	const markedHtml = marked.parse(markedTxt);
+	
+	ReadmeTab.document.write(`
+		<html>
+		<head>
+			<title>About the Interactive Web Map</title>
+			<link rel="stylesheet" href="libs/marked/github-markdown.css">
+			<style>
+				html, body {
+					margin: 0;
+					padding: 0;
+					height: 100%;
+					background: #c0c1c2;
+				}
+				
+				body {
+					display: flex;
+					justify-content: center;
+					align-items: flex-start;
+					overflow-y: auto;
+					padding: 2em;
+				}
+				
+				.markdown-body {
+					box-sizing: border-box;
+					padding: 2em;
+					max-width: 900px;
+					width: 100%;
+					background: rgb(60,60,60);
+					border-radius: 8px;
+					box-shadow: 0 2px 6px rgba(120,120,120,0.25);
+				}
+				
+				img {
+					max-width: 100%;
+					height: auto;
+				}
+			</style>
+		</head>
+		<body>
+			<article class="markdown-body">${markedHtml}</article>
+		</body>
+		</html>
+	`);
+	ReadmeTab.document.close();
+}
