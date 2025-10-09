@@ -409,16 +409,42 @@ function createPolygonsFromGeoJson(data) {
 			}
 			
 			forPilot = pilot;
+			// Sort polygons based on area
+			reorderPolygons(forPilot);
 			nextFeat();
 		});				
 	}
-	nextFeat();
+	nextFeat();	
 }
-
 // --------------------------------------------------------------------
 // End of Loading Shape File Routine
 // --------------------------------------------------------------------
 
+// Function to reorder polygons per pilot based on area property (for Leaflet rendering that works on the order of drawing)
+function reorderPolygons(pilot) {
+	// Extract the indexes of polygons in pilot
+	const indFilter = polygons
+		.map((p, i) => (p.options.pilot === pilot ? i : -1))
+		.filter(i => i !== -1);
+
+	// Check if sorting is needed
+	if (indFilter.length <= 1) return;
+	
+	// Extract and sort polygons based on area
+	const polyFilter = indFilter.map(i => polygons[i]);
+	polyFilter.sort((p1,p2) => p1.options.zIndex - p2.options.zIndex);
+	
+	// Sort the original polygons array 
+	indFilter.forEach((idx, i) => {
+		polygons[idx] = polyFilter[i];
+	});
+	
+	// Reorder visually if required
+	polyFilter.forEach(p => {
+		if (p._map) p.bringToFront();
+	});
+}
+	
 // Show the intiail instructions when the project is run
 window.onload = showConfirmationMessage;
 
@@ -580,7 +606,8 @@ function addDrawEventListeners() {
 			
 			// Run intersection check
 			checkIntersection(pilot_site);
-
+			// Sort polygons based on area
+			reorderPolygons(pilot_site);
 		});
 		
 	});	
@@ -955,10 +982,13 @@ async function initMap(inputJSON) {
 					});						
 				}	
 			});
+			// Sort polygons based on area
+			reorderPolygons(place.name);
+			
 			// Check if coastal units at a pilot site intersects (for display color purposes)
 			// optional intersection check (implement later)
 			if (typeof checkIntersection === 'function') checkIntersection(place.name);
-							
+			
 			// Loop through the locations and add markers to the map for pilot locations
 			// Get pilot information dynamically
 			place.description = getDescription(place.name);
@@ -1571,11 +1601,7 @@ function checkIntersection(atPilot) {
 	
 	// Filter the coastal units at pilot being checked
 	var checkPolygons = polygons.filter(p => p.options && p.options.pilot === atPilot);
-	//console.log(checkPolygons);
-	// Color pallette for intersecting coastal units
-	//var colorP = ['#FE2712', '#FB9902', '#FEFE33', '#B2D732', '#0247FE', '#8601AF', '#C21460']
-	//var colorP = ['#ffd93d', '#ff6fa3', '#5fb46d', '#7ec8e3', '#ffb87a','#ff0000'];
-	//let colorInd = 0;
+	
 	// Set the display properties for each coastal unit at pilot 
 	checkPolygons.forEach(function(checkP) {
 		checkP.setStyle({
