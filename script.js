@@ -451,7 +451,7 @@ window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
 	const pilot = params.get('pilot');
 	const cu = params.get('cu');
-	
+	console.log(pilot, cu);
 	if (pilot && cu) {
 		try {
 			const response = await fetch("src/CoastalUnits.json");
@@ -1755,3 +1755,4 @@ async function openReadme() {
 	`);
 	ReadmeTab.document.close();
 }
+
