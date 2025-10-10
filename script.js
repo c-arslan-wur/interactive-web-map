@@ -446,8 +446,35 @@ function reorderPolygons(pilot) {
 }
 	
 // Show the intiail instructions when the project is run
-window.onload = showConfirmationMessage;
-
+//window.onload = showConfirmationMessage;
+window.onload = async function() {
+	const params = new URLSearchParams(window.location.search);
+	const pilot = params.get('pilot');
+	const cu = params.get('cu');
+	
+	if (pilot && cu) {
+		try {
+			const response = await fetch("src/CoastalUnits.json");
+			if (!response.ok) throw new Error("Default JSON not found in the src/");
+			const JSONdata = await response.json();
+			const JSONextract = JSONdata
+				.filter(p => p.name === pilot)
+				.map(p => ({
+					...p,
+					coastalUnits: p.coastalUnits.filter(poly => poly.delin === cu)
+				}))
+				.filter(p => p.coaastalUnits.length > 0);
+			console.log(JSON.stringify(JSONextract, null, 2));
+			//initMap(JSONdata);
+			return;
+		} catch (err) {
+			console.error("Error loading default map:", err);
+			alert("Could not load default map. Please select your version of CoastalUnits.json");
+		}
+	} else {
+			showConfirmationMessage();
+	}
+}
 // Assign readMe.txt file with data paper information to the authors header
 document.querySelector("#authors span").addEventListener("click", function() {
 	// Specify the path to the text file: pre-defined
