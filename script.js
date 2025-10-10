@@ -463,7 +463,7 @@ window.onload = async function() {
 					...p,
 					coastalUnits: p.coastalUnits.filter(poly => poly.delin === cu)
 				}))
-				.filter(p => p.coaastalUnits.length > 0);
+				.filter(p => p.coastalUnits.length > 0);
 			console.log(JSON.stringify(JSONextract, null, 2));
 			//initMap(JSONdata);
 			return;
@@ -1755,4 +1755,5 @@ async function openReadme() {
 	`);
 	ReadmeTab.document.close();
 }
+
 
