@@ -457,11 +457,12 @@ window.onload = async function() {
 			const response = await fetch("src/CoastalUnits.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
+			console.log("Raw data sample:", JSONdata.slice(0,3));
 			const JSONextract = JSONdata
-				.filter(p => p.name === pilot)
+				.filter(p => p.name.toLowerCase().trim() === pilot.toLowerCase().trim())
 				.map(p => ({
 					...p,
-					coastalUnits: p.coastalUnits.filter(poly => poly.delin === cu)
+					coastalUnits: p.coastalUnits.filter(poly => poly.delin.toLowerCase().trim() === cu.toLowerCase().trim())
 				}))
 				.filter(p => p.coastalUnits.length > 0);
 			console.log(JSON.stringify(JSONextract, null, 2));
@@ -1755,5 +1756,6 @@ async function openReadme() {
 	`);
 	ReadmeTab.document.close();
 }
+
 
 
