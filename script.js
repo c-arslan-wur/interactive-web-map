@@ -93,6 +93,7 @@ async function loadMap() {
 	polygons = [];
 	locations = null;
 	pilotMarkers.length = 0;
+	urlExists = false;
 	// Show confirmation screen again (initial page view)
 	showConfirmationMessage();
 	// Disable shape file loader
@@ -447,17 +448,16 @@ function reorderPolygons(pilot) {
 	
 // Show the intiail instructions when the project is run
 //window.onload = showConfirmationMessage;
+let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
 	const pilot = params.get('pilot');
 	const cu = params.get('cu');
-	console.log(pilot, cu);
 	if (pilot && cu) {
 		try {
 			const response = await fetch("src/CoastalUnits.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
-			console.log("Raw data sample:", JSONdata.slice(0,3));
 			const JSONextract = JSONdata
 				.filter(p => p.name.toLowerCase().trim() === pilot.toLowerCase().trim())
 				.map(p => ({
@@ -465,12 +465,13 @@ window.onload = async function() {
 					coastalUnits: p.coastalUnits.filter(poly => poly.delin.toLowerCase().trim() === cu.toLowerCase().trim())
 				}))
 				.filter(p => p.coastalUnits.length > 0);
-			console.log(JSON.stringify(JSONextract, null, 2));
-			//initMap(JSONdata);
+			urlExists = true;
+			initMap(JSONextract);
 			return;
 		} catch (err) {
-			console.error("Error loading default map:", err);
-			alert("Could not load default map. Please select your version of CoastalUnits.json");
+			console.error("Error loading the Coastal Unit", err);
+			alert("Could not view the Coastal Unit. Please make sure there exists a correct link to the CoastalUnit.");
+			window.close();
 		}
 	} else {
 			showConfirmationMessage();
@@ -1035,6 +1036,17 @@ async function initMap(inputJSON) {
 			
 			// Add marker to map by default
 			marker.addTo(map);
+
+			// Change the view routine if the polygon is loaded from url
+			if (urlExists) {
+				addDrawTools();
+				polygons.forEach(p => !map.hasLayer(p) && p.addTo(map));
+				map.flyTo([place.location.lat, place.location.lng], place.zoom, {
+					animate: true,
+					duration: 1.5,
+					easeLinearity: 0.25
+				});
+			}
 		});
 	} else {
 		//console.log("You have blank map!");
@@ -1357,6 +1369,24 @@ function doneEditing() {
 	}
 }
 
+// Getting unique links to each polygon
+function linkToPolygon() {
+	// Work on the polygon that is activated in the main routine		
+	if (!selectedPolygon) return;
+				
+	// close the menu
+	selectedPolygon.menuPopup.remove();
+	selectedPolygon.menuPopup = null;
+	rightClickMenu = false;
+	
+	const pilotID = selectedPolygon.options.pilot;
+	const cuID = selectedPolygon.options.delin;
+	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}`;
+
+	navigator.clipboard.writeText(urlPoly);
+	alert("Link to the Coastal Unit is copied:\n" + urlPoly);
+
+}
 // Disabling buttons when editing in action
 function toggleButtons(enable) {
 	const ids = ["reset-view-button", "load-locations-btn", "load-new-locations-btn", "save-locations-btn", "file-select-btn"];
@@ -1570,6 +1600,10 @@ function assignPolygonEvents (polygon) {
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
 					'onclick="deletePolygon()">Delete Coastal Unit</div>' + 
+				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
+					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
+					'onmouseout="this.style.backgroundColor=\'white\'" '+
+					'onclick="linkToPolygon()">Link to Coastal Unit</div>' + 
 				'</div>';
 				
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
@@ -1606,7 +1640,12 @@ function assignMarkerEvents (marker) {
 	// Add event listener for marker left-click
 	// Click → zoom to site, show polygons
 	marker.on('click', function () {
-		map.setView([marker.getLatLng().lat, marker.getLatLng().lng], marker.zoomLevel);
+		//map.setView([marker.getLatLng().lat, marker.getLatLng().lng], marker.zoomLevel);
+		map.flyTo([marker.getLatLng().lat, marker.getLatLng().lng], marker.zoomLevel, {
+			animate: true,
+			duration: 1.5,
+			easeLinearity: 0.25
+		});
 		map.closePopup();
 		map.removeLayer(marker); // Hide marker
 		
