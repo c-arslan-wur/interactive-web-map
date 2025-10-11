@@ -452,10 +452,13 @@ function reorderPolygons(pilot) {
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
-	const pilot = params.get('pilot').toLowerCase().trim();
-	const cu = params.get('cu').toLowerCase().trim();
-	const nbs = params.get('nbs').toLowerCase().trim()
+	const pilot = params.get('pilot');
+	const cu = params.get('cu');
+	const nbs = params.get('nbs');
 	if (pilot && cu && nbs) {
+		pilot = pilot.toLowerCase().trim();
+		cu = cu.toLowerCase().trim();
+		nbs = nbs.toLowerCase().trim();
 		try {
 			const response = await fetch("src/CoastalUnits.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
