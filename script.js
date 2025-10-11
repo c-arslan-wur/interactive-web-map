@@ -456,22 +456,22 @@ window.onload = async function() {
 	const cu = params.get('cu');
 	const nbs = params.get('nbs');
 	if (pilot && cu && nbs) {
-		pilot = pilot.toLowerCase().trim();
-		cu = cu.toLowerCase().trim();
-		nbs = nbs.toLowerCase().trim();
+		const pilotKey = pilot.toLowerCase().trim();
+		const cuKey = cu.toLowerCase().trim();
+		const nbsKey = nbs.toLowerCase().trim();
 		try {
 			const response = await fetch("src/CoastalUnits.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
 			const JSONextract = JSONdata
-				.filter(p => p.name.toLowerCase().trim() === pilot)
+				.filter(p => p.name.toLowerCase().trim() === pilotKey)
 				.map(p => ({
 					...p,
 					coastalUnits: p.coastalUnits.filter(poly => 
 						poly.delin &&
 						poly.nbsBB &&
-						poly.delin.toLowerCase().trim() === cu && 
-						poly.nbsBB.toLowerCase().trim() === nbs
+						poly.delin.toLowerCase().trim() === cuKey && 
+						poly.nbsBB.toLowerCase().trim() === nbsKey
 					)
 				}))
 				.filter(p => p.coastalUnits.length > 0);
