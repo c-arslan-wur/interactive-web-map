@@ -20,6 +20,7 @@ let activePilot;
 let ReadmeTab = null;
 
 // Function to display the initial instructions when the project is run
+document.getElementById('confirmationMessage').style.display = 'none';
 function showConfirmationMessage() {
 	document.getElementById('confirmationMessage').style.display = 'block';
 }
@@ -814,8 +815,12 @@ resetViewBtn.addEventListener('click', function() {
 	activePilot = "";
 	
 	// Reset zoom and center to Europe scale overview
-	map.setView([originalCenter.lat, originalCenter.lng], originalZoom);
-	
+	//map.setView([originalCenter.lat, originalCenter.lng], originalZoom);
+	map.flyTo([originalCenter.lat, originalCenter.lng], originalZoom, {
+		animate: true,
+		duration: 1.5,
+		easeLinearity: 0.25
+	});
 	// Re-add all markers
 	pilotMarkers.forEach(marker => {
 		if (!map.hasLayer(marker)) {
