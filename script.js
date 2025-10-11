@@ -452,18 +452,24 @@ function reorderPolygons(pilot) {
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
-	const pilot = params.get('pilot');
-	const cu = params.get('cu');
-	if (pilot && cu) {
+	const pilot = params.get('pilot').toLowerCase().trim();
+	const cu = params.get('cu').toLowerCase().trim();
+	const nbs = params.get('nbs').toLowerCase().trim()
+	if (pilot && cu && nbs) {
 		try {
 			const response = await fetch("src/CoastalUnits.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
 			const JSONextract = JSONdata
-				.filter(p => p.name.toLowerCase().trim() === pilot.toLowerCase().trim())
+				.filter(p => p.name.toLowerCase().trim() === pilot)
 				.map(p => ({
 					...p,
-					coastalUnits: p.coastalUnits.filter(poly => poly.delin.toLowerCase().trim() === cu.toLowerCase().trim())
+					coastalUnits: p.coastalUnits.filter(poly => 
+						poly.delin &&
+						poly.nbsBB &&
+						poly.delin.toLowerCase().trim() === cu && 
+						poly.nbsBB.toLowerCase().trim() === nbs
+					)
 				}))
 				.filter(p => p.coastalUnits.length > 0);
 			urlExists = true;
@@ -1386,7 +1392,8 @@ function linkToPolygon() {
 	
 	const pilotID = selectedPolygon.options.pilot;
 	const cuID = selectedPolygon.options.delin;
-	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}`;
+	const nbsID = selectedPolygon.options.nbsBB;
+	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}&nbs=${nbsID}`;
 
 	navigator.clipboard.writeText(urlPoly);
 	alert("Link to the Coastal Unit is copied:\n" + urlPoly);
