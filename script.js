@@ -12,6 +12,7 @@ var polygons = [];
 // Initializing global variables
 //var contextMenu;
 var locations;
+var locationsCoords = [];
 var isEditPolygon = false;
 // Create a marker group to manage them globally
 var pilotMarkers = [];
@@ -93,6 +94,7 @@ async function loadMap() {
 	
 	polygons = [];
 	locations = null;
+	locationsCoords = [];
 	pilotMarkers.length = 0;
 	urlExists = false;
 	// Show confirmation screen again (initial page view)
@@ -172,6 +174,7 @@ shapefileInput.addEventListener("change", event  => {
 		event.target.value = "";
 		return;
 	}
+	
 	
 	const ext = shapefile.name.split('.').pop().toLowerCase();
     if (ext === "geojson" || ext === "json") {
@@ -838,6 +841,11 @@ resetViewBtn.addEventListener('click', function() {
 	});
 	
 	// Hide coastal units
+	locationsCoords.length && locationsCoords.forEach(poly => {
+		if (map.hasLayer(poly)) {
+			map.removeLayer(poly);
+		}
+	});
 	polygons.forEach(poly => {
 		if (map.hasLayer(poly)) {
 			map.removeLayer(poly);
@@ -968,6 +976,51 @@ async function initMap(inputJSON) {
 			
 		// Loop through the locations data: pilot data and coastal units associated to each pilot
 		locations.forEach(function(place) {
+			// For each pilot, load the pilot shape if exists
+			if (place.coords && place.coords.length !== 0) {
+				//if (!Array.isArray(place.coords)) return; // safeguard
+
+				let placeCoords;
+				if (place.coords[0].lat !== undefined) {
+					// Simple polygon → wrap once
+					placeCoords = [[ ...place.coords ]];
+				} else if (Array.isArray(place.coords[0]) && place.coords[0][0].lat !== undefined) {
+					// Polygon with one ring → wrap outer structure
+					placeCoords = [ ...place.coords ];
+				} else {
+					// Already nested properly (multi-ring / multipolygon)
+					placeCoords = place.coords.flat();
+				}
+				// Calculate area 
+				let placeArea = 0;
+				placeCoords.forEach(coords => {
+					const tempcoord = coords.map(ll => [ll.lng, ll.lat]); // GeoJSON format: [lng, lat]
+					const poly = turf.polygon([tempcoord]);	
+					placeArea += turf.area(poly); 	
+				});	
+				const areaPlace = Math.round(placeArea / 10000);
+				// Create leaflet polygon (handles Polygon + MultiPolygon)
+				placeCoords.forEach(coords => {
+					const placePoly = L.polygon(coords, {
+						pilot: place.name,
+						code: place.code,
+						zIndex: -areaPlace,
+						view: true
+					});
+					placePoly.setStyle({
+						color: '#f53bff',
+						opacity: 0.25,
+						weight: 2,
+						fillColor: '#f53bff',
+						fillOpacity: 0.15
+					});
+					
+					assignLocationEvents(placePoly);
+					
+					locationsCoords.push(placePoly);
+				});
+			}
+			
 			// For each pilot, define polygons from coastal unit geographical data
 			place.coastalUnits.forEach(function(polygonData) {
 				if (!polygonData.shp){			
@@ -1054,6 +1107,7 @@ async function initMap(inputJSON) {
 			// Change the view routine if the polygon is loaded from url
 			if (urlExists) {
 				addDrawTools();
+				locationsCoords.length && locationsCoords.forEach(p => !map.hasLayer(p) && p.options.view && p.addTo(map));
 				polygons.forEach(p => !map.hasLayer(p) && p.addTo(map));
 				map.flyTo([place.location.lat, place.location.lng], place.zoom, {
 					animate: true,
@@ -1089,9 +1143,11 @@ async function initMap(inputJSON) {
 	map.on('zoomend', function () {
 		if (map.getZoom() >= 10) {
 			addDrawTools();
+			locationsCoords.length && locationsCoords.forEach(p => !map.hasLayer(p) && p.options.view && p.addTo(map));
 			polygons.forEach(p => !map.hasLayer(p) && p.addTo(map));
 		} else  {
 			removeDrawTools();
+			locationsCoords.length && locationsCoords.forEach(p => map.hasLayer(p) && map.removeLayer(p));
 			polygons.forEach(p => map.hasLayer(p) && map.removeLayer(p));
 		}
 		map.getZoom() >= 6
@@ -1549,6 +1605,35 @@ function polyLocater(polygon) {
 	return L.latLng(maxLat, maxLng);
 }
 
+// Coastal landscape events
+function assignLocationEvents (polygon) {
+	// Assign Mouseover event
+	polygon.on('mouseover', function () {
+		if (isEditPolygon || rightClickMenu) return;
+		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
+			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Downscaled Coastal Zone</span>" + "<br>" +
+			"<strong>Pilot:</strong>" + (this.options.pilot || '') + "<br>" +
+			"<strong>Zone:</strong>" + (this.options.code || '') + "<br>" +
+			"<strong>Area:</strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
+		const infoWindowLoc = polyLocater(this);
+		this.infoPopup = L.popup({closeButton: false , className: 'infoBox' })
+		 .setLatLng(infoWindowLoc)
+		 .setContent(content)
+		 .openOn(map);
+	});
+
+	// Add mouseout event listener to close info window when mouse leaves polygon
+	// Mouseout: hide info box
+	polygon.on('mouseout', function () {
+		if (rightClickMenu) return;
+		if (this.infoPopup && map.hasLayer(this.infoPopup)) {
+			map.closePopup(this.infoPopup);
+			this.infoPopup = null;
+		}
+	});
+	
+}
+
 // Polygon events
 function assignPolygonEvents (polygon) {
 	// Add mouseover event listener to show info window when mouse hovers over polygon
@@ -1618,6 +1703,10 @@ function assignPolygonEvents (polygon) {
 				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
+					'onclick="toggleView()">Toggle Zone View</div>' +
+				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
+					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
+					'onmouseout="this.style.backgroundColor=\'white\'" '+
 					'onclick="linkToPolygon()">Link to Coastal Unit</div>' + 
 				'</div>';
 				
@@ -1630,6 +1719,42 @@ function assignPolygonEvents (polygon) {
 		selectedPolygon = this;
 		rightClickMenu = true;
 	});
+}
+// Toggle view of the larger coastal zone of downscaling
+function toggleView() {
+	// Work on the polygon that is activated in the main routine		
+	if (!selectedPolygon) return;
+				
+	// close the menu
+	if (selectedPolygon.menuPopup && map.hasLayer(selectedPolygon.menuPopup)) {
+		selectedPolygon.menuPopup.remove();
+		selectedPolygon.menuPopup = null;
+		rightClickMenu = false;
+	}
+	
+	const plt = selectedPolygon.options.pilot;
+	const tempPolys = polygons.filter(p => p.options.pilot === plt);
+	const tempLocs = locationsCoords && locationsCoords.filter(loc => loc.options.pilot === plt);
+	let view = false;
+	tempLocs.length && tempLocs.forEach(loc => {
+		if (map.hasLayer(loc)) {
+			map.removeLayer(loc);
+			loc.options.view = false;
+		} else {
+			loc.addTo(map);
+			loc.options.view = true;
+			view = true;
+		}
+	});
+	if (view) {
+		tempPolys.length && tempPolys.forEach(p => {
+			if (map.hasLayer(p)) {
+				map.removeLayer(p);
+				p.addTo(map);
+			}
+		});
+		view = false;
+	}
 }
 
 // Marker events
@@ -1670,6 +1795,11 @@ function assignMarkerEvents (marker) {
 		addDrawTools();
 		
 		// Show polygons for this pilot
+		locationsCoords.length && locationsCoords.forEach(function (poly) {
+			if (poly.options.pilot === marker.options.title && poly.options.view) {
+				poly.addTo(map);
+			}
+		});
 		polygons.forEach(function (poly) {
 			if (poly.options.pilot === marker.options.title) {
 				poly.addTo(map);
