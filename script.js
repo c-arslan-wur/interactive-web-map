@@ -548,8 +548,6 @@ function addDrawEventListeners() {
 	// Event-listener for drawing start
 	map.on(L.Draw.Event.DRAWSTART, function () {
 		//console.log("Drawing starts!");
-		// Allow zooming with mouse wheel
-		map.scrollWheelZoom.enable();
 		drawingStart = true;
 		shapeCreated = false;
 		isEditPolygon = true;
@@ -565,8 +563,6 @@ function addDrawEventListeners() {
 			toggleButtons(true);
 			checkIntersection(activePilot);
 		}
-		// Ensure zooming after drawing stops
-		map.scrollWheelZoom.enable();
 		drawingStart = false;
 	});
 	
