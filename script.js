@@ -19,6 +19,9 @@ var pilotMarkers = [];
 let activePilot;
 // Placeholder for Readme tab
 let ReadmeTab = null;
+// global location names
+//var glob_pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
+var glob_pilots = ["New Location"];
 
 // Function to display the initial instructions when the project is run
 document.getElementById('confirmationMessage').style.display = 'none';
@@ -94,6 +97,7 @@ async function loadMap() {
 	
 	polygons = [];
 	locations = null;
+	glob_pilots = ["New Location"];
 	locationsCoords = [];
 	pilotMarkers.length = 0;
 	urlExists = false;
@@ -326,7 +330,10 @@ function createPolygonsFromGeoJson(data) {
 					"coastalUnits": []
 				};
 				locations.push(newPilot);
-				
+
+				// Add new location to the globall placeholder
+				glob_pilots.splice(glob_pilots.length - 1, 0, pilot);
+
 				// Get pilot information dynamically
 				newPilot.description = getDescription(newPilot.name);
 				
@@ -592,6 +599,9 @@ function addDrawEventListeners() {
 				};
 				locations.push(newPilot);
 				
+				// Add new location to the globall placeholder
+				glob_pilots.splice(glob_pilots.length - 1, 0, pilot_site);
+				
 				// Get pilot information dynamically
 				newPilot.description = getDescription(newPilot.name);
 				
@@ -696,11 +706,12 @@ function showModal(callback) {
 	dropdown.appendChild(dflt);
 	// Set the pilot names in the dropdown menu
 	let pilots;
-	if (mapMode ===  "rest-coast") {
-		pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
-	} else {
-		pilots = ["New Location"];
-	}
+	//if (mapMode ===  "rest-coast") {
+		//pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
+	pilots = glob_pilots;
+	//} else {
+	//	pilots = ["New Location"];
+	//}
 	pilots.forEach(pilot => {
 		const option = document.createElement("option");
 		option.value = pilot;
@@ -723,6 +734,8 @@ function showModal(callback) {
 		}
 		if (linksToSharedFolders[dropdown.value]) {
 			window.open(linksToSharedFolders[dropdown.value], "_blank");
+		} else {
+			window.open(linksToSharedFolders["New Location"], "_blank");
 		}
 	});
 	
@@ -1080,6 +1093,8 @@ async function initMap(inputJSON) {
 			});
 			// Sort polygons based on area
 			reorderPolygons(place.name);
+			// Add pilot to global placeholder
+			glob_pilots.splice(glob_pilots.length - 1, 0, place.name);
 			
 			// Check if coastal units at a pilot site intersects (for display color purposes)
 			// optional intersection check (implement later)
@@ -1087,7 +1102,9 @@ async function initMap(inputJSON) {
 			
 			// Loop through the locations and add markers to the map for pilot locations
 			// Get pilot information dynamically
-			place.description = getDescription(place.name);
+			if (!place.description) {
+				place.description = getDescription(place.name);
+			}
 			
 			// Create marker
 			const marker = L.marker([place.location.lat, place.location.lng], {
@@ -1304,10 +1321,11 @@ function editPolygon() {
 		const infoButton = document.createElement("button");
 		infoButton.textContent = "Go to Shared Folder";
 		infoButton.title = "Click to open the shared folder for this site!";
-		const pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
+		//const pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
 		let linkTo = "";
 		infoButton.addEventListener("click", () => {
-			if (pilots.includes(pilt)) {
+			//if (pilots.includes(pilt)) {
+			if (linksToSharedFolders[pilt]) {
 				linkTo = linksToSharedFolders[pilt];
 			} else {
 				linkTo = linksToSharedFolders["New Location"];
@@ -1762,7 +1780,7 @@ function assignMarkerEvents (marker) {
 	// Add event listener for marker mouseover
 	// Mouseover → show popup with description
 	marker.on('mouseover', function () {
-		const description = getDescription(marker.options.title);
+		const description = locations.find(loc => loc.name === marker.options.title).description;
 		const content = '<div><strong>' + marker.options.title + '</strong><br>' + description + '</div>';
 		marker.bindPopup(content).openPopup();
 	});
