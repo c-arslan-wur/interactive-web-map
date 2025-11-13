@@ -1087,9 +1087,7 @@ async function initMap(inputJSON) {
 			
 			// Loop through the locations and add markers to the map for pilot locations
 			// Get pilot information dynamically
-			if (!place.description) {
-				place.description = getDescription(place.name);
-			}
+			place.description = getDescription(place.name);
 			
 			// Create marker
 			const marker = L.marker([place.location.lat, place.location.lng], {
@@ -1764,7 +1762,7 @@ function assignMarkerEvents (marker) {
 	// Add event listener for marker mouseover
 	// Mouseover → show popup with description
 	marker.on('mouseover', function () {
-		const description = locations.find(loc => loc.name === marker.options.title).description;
+		const description = getDescription(marker.options.title);
 		const content = '<div><strong>' + marker.options.title + '</strong><br>' + description + '</div>';
 		marker.bindPopup(content).openPopup();
 	});
