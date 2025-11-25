@@ -470,7 +470,9 @@ window.onload = async function() {
 		const cuKey = cu.toLowerCase().trim();
 		const nbsKey = nbs.toLowerCase().trim();
 		try {
-			const response = await fetch("src/CoastalUnits.json");
+			// The Coastal Units with url are extracted from a seperate json that includes polygons from diverse projects
+			// The owner of the project keeps track of this file in the project repository
+			const response = await fetch("src/CoastalUnitsAll.json");
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
 			const JSONextract = JSONdata
@@ -486,7 +488,13 @@ window.onload = async function() {
 				}))
 				.filter(p => p.coastalUnits.length > 0);
 			urlExists = true;
-			initMap(JSONextract);
+			// If url belongs to an existing Coastal Unit, map is initialized,
+			// and otherwise, a user warning is displayed
+			if (JSONextract.length > 0) {
+				initMap(JSONextract);
+			} else {
+				alert("The Coastal Unit does not exist in the current repository for the provided URL.\nPlease contact repository owner for an updated version.")
+			}				
 			return;
 		} catch (err) {
 			console.error("Error loading the Coastal Unit", err);
