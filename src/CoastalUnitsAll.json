@@ -7016,7 +7016,7 @@
     "description": "<div><strong>Baltic sea, Fellow Pilot</strong><br>Quick facts<br>Scale: Regional<br>Countries: Poland, Russia<br>Coastal elements: island, lagoon<br>Download: <a href=\"https://rest-coast.eu/storage/app/media/Rest-Coast%20Pilot%20Fact%20Sheet_Vistula_final.pdf\" target=\"_blank\">Factsheet Vistula Lagoon</a><br>Go to: <a href=\"https://drive.google.com/drive/folders/1KUOtM3eGQcDmhWhctbXDV6UI4GvzxxdT?usp=drive_link\"target=\"_blank\">Shared Directory</a></div>"
   },
   {
-    "name": "Pärnu Catchment",
+    "name": "Parnu Catchment",
     "location": {
       "lat": 58.38674226666668,
       "lng": 24.53257795555556
@@ -7216,7 +7216,7 @@
         ]
       },
       {
-        "delin": "Kõrsa",
+        "delin": "Korsa",
         "nbsBB": "Ecological Mire Restoration",
         "nbsFW": "https://docs.google.com/spreadsheets/d/1gDRW1k9jWn5vPEOjq7JtHKyDY7fZuvRIJe7XWUYy_h8/edit?usp=drive_link",
         "shp": false,
