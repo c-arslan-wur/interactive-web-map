@@ -9915,7 +9915,7 @@
     "description": "<div><strong>East Mediterranean, Fellow Pilot</strong><br>Quick facts<br>Scale: Regional<br>Countries: Israel<br>Coastal elements: estuary, lagoon<br>Download: <a href=\"https://rest-coast.eu/storage/app/media/rest-coast-pilot-fact-sheetnahal-dalia4pages-1.pdf\" target=\"_blank\">Factsheet Nahal Dalia</a><br>View/Edit: <a href=\"https://docs.google.com/document/d/1HAjjLUsvUIjTos4XFXiMDq0JasyHgtfm4L40XqHseu8/edit?usp=drive_link\" target=\"_blank\">Pilot Scale Data</a></div>"
   },
   {
-    "name": "Paernu Catchment",
+    "name": "Pärnu Catchment",
     "location": {
       "lat": 58.38674226666668,
       "lng": 24.53257795555556
@@ -10115,7 +10115,7 @@
         ]
       },
       {
-        "delin": "Koursa",
+        "delin": "Kõrsa",
         "nbsBB": "Ecological Mire Restoration",
         "nbsFW": "https://docs.google.com/spreadsheets/d/1gDRW1k9jWn5vPEOjq7JtHKyDY7fZuvRIJe7XWUYy_h8/edit?usp=drive_link",
         "shp": false,
