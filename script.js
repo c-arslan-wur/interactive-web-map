@@ -462,9 +462,9 @@ function reorderPolygons(pilot) {
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
-	const pilot = params.get('pilot');
-	const cu = params.get('cu');
-	const nbs = params.get('nbs');
+	const pilot = decodeURIComponent(params.get('pilot'));
+	const cu = decodeURIComponent(params.get('cu'));
+	const nbs = decodeURIComponent(params.get('nbs'));
 	if (pilot && cu && nbs) {
 		const pilotKey = pilot.toLowerCase().trim();
 		const cuKey = cu.toLowerCase().trim();
@@ -1475,9 +1475,9 @@ function linkToPolygon() {
 	selectedPolygon.menuPopup = null;
 	rightClickMenu = false;
 	
-	const pilotID = selectedPolygon.options.pilot;
-	const cuID = selectedPolygon.options.delin;
-	const nbsID = selectedPolygon.options.nbsBB;
+	const pilotID = encodeURIComponent(selectedPolygon.options.pilot);
+	const cuID = encodeURIComponent(selectedPolygon.options.delin);
+	const nbsID = encodeURIComponent(selectedPolygon.options.nbsBB);
 	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}&nbs=${nbsID}`;
 
 	navigator.clipboard.writeText(urlPoly);
