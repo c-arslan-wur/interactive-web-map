@@ -462,14 +462,14 @@ function reorderPolygons(pilot) {
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
-	const pilot = decodeURIComponent(params.get('pilot'));
-	const cu = decodeURIComponent(params.get('cu'));
-	const nbs = decodeURIComponent(params.get('nbs'));
-	console.log(pilot, cu, nbs);
+	const pilot = params.get('pilot') ? decodeURIComponent(params.get('pilot')) : null;
+	const cu = params.get('cu') ? decodeURIComponent(params.get('cu')) : null;
+	const nbs = params.get('nbs') ? decodeURIComponent(params.get('nbs')) : null;
+	
 	if (pilot && cu && nbs) {
-		const pilotKey = pilot.toLowerCase().trim();
-		const cuKey = cu.toLowerCase().trim();
-		const nbsKey = nbs.toLowerCase().trim();
+		const pilotKey = pilot.normalize("NFC").toLowerCase().trim();
+		const cuKey = cu.normalize("NFC").toLowerCase().trim();
+		const nbsKey = nbs.normalize("NFC").toLowerCase().trim();
 		try {
 			// The Coastal Units with url are extracted from a seperate json that includes polygons from diverse projects
 			// The owner of the project keeps track of this file in the project repository
@@ -477,14 +477,14 @@ window.onload = async function() {
 			if (!response.ok) throw new Error("Default JSON not found in the src/");
 			const JSONdata = await response.json();
 			const JSONextract = JSONdata
-				.filter(p => p.name.toLowerCase().trim() === pilotKey)
+				.filter(p => p.name.normalize("NFC").toLowerCase().trim() === pilotKey)
 				.map(p => ({
 					...p,
 					coastalUnits: p.coastalUnits.filter(poly => 
 						poly.delin &&
 						poly.nbsBB &&
-						poly.delin.toLowerCase().trim() === cuKey && 
-						poly.nbsBB.toLowerCase().trim() === nbsKey
+						poly.delin.normalize("NFC").toLowerCase().trim() === cuKey && 
+						poly.nbsBB.normalize("NFC").toLowerCase().trim() === nbsKey
 					)
 				}))
 				.filter(p => p.coastalUnits.length > 0);
