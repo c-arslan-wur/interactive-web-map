@@ -465,6 +465,7 @@ window.onload = async function() {
 	const pilot = decodeURIComponent(params.get('pilot'));
 	const cu = decodeURIComponent(params.get('cu'));
 	const nbs = decodeURIComponent(params.get('nbs'));
+	console.log(pilot, cu, nbs);
 	if (pilot && cu && nbs) {
 		const pilotKey = pilot.toLowerCase().trim();
 		const cuKey = cu.toLowerCase().trim();
