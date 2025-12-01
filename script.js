@@ -489,9 +489,9 @@ function reorderPolygons(pilot) {
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
-	const pilot = params.get('pilot') ? decodeURIComponent(params.get('pilot')) : null;
-	const cu = params.get('cu') ? decodeURIComponent(params.get('cu')) : null;
-	const nbs = params.get('nbs') ? decodeURIComponent(params.get('nbs')) : null;
+	const pilot = params.get('nb3L') ? decodeURIComponent(params.get('nb3L')) : null;
+	const cu = params.get('nb3U') ? decodeURIComponent(params.get('nb3U')) : null;
+	const nbs = params.get('nb3P') ? decodeURIComponent(params.get('nb3P')) : null;
 	
 	if (pilot && cu && nbs) {
 		const pilotKey = pilot.normalize("NFC").toLowerCase().trim();
