@@ -2,7 +2,7 @@ let map;
 let drawControl;
 let selectedPolygon = null;
 let rightClickMenu = false;
-let mapMode = "rest-coast"; //"rest-coast" or "new-map"
+let mapMode = ""; //"rest-coast", "waterlands", "directory", or "new-map"
 
 // Setting the map view
 var originalZoom = 4;
@@ -30,7 +30,7 @@ function showConfirmationMessage() {
 }
 
 // ----------------------------------------------------------------------------------
-// Loading map routine: Rest-Coast Coastal Units or New Map
+// Loading map routine: Rest-Coast, Waterlands, file from directory, or New Map
 // ----------------------------------------------------------------------------------
 
 // Load Rest-Coast polygons
@@ -41,6 +41,25 @@ loadBtn.addEventListener('click', async () => {
 	await loadMap();
 	
 });
+
+// Load Waterlands polygons
+const loadBtnWL = document.getElementById('load-locations-btn-WL');
+loadBtnWL.addEventListener('click', async () => {
+	
+	mapMode = "waterlands";
+	await loadMap();
+	
+});
+
+// Load polygons from local directory
+const loadBtnFile = document.getElementById('load-locations-btn-file');
+loadBtnFile.addEventListener('click', async () => {
+	
+	mapMode = "directory";
+	await loadMap();
+	
+});
+
 // Load new blank Map
 const loadMapBtn = document.getElementById('load-new-locations-btn');
 loadMapBtn.addEventListener('click', async () => {
@@ -49,36 +68,14 @@ loadMapBtn.addEventListener('click', async () => {
 	await loadMap();
 	
 });
-// Open file selection dialog: coastal units incorporated in geojson file
+// Open file selection dialog: polygons incorporated in .json file
 const fileInput = document.getElementById('fileInput');
 async function loadMap() {
 	
-	if (!map) {
-		// Initial screen → just open file input
-		if (mapMode == "rest-coast") {
-			try {
-				const response = await fetch("src/CoastalUnits.json");
-				if (!response.ok) throw new Error("Default JSON not found in the src/");
-				const JSONdata = await response.json();
-				document.getElementById('confirmationMessage').style.display = 'none';
-				initMap(JSONdata);
-				return;
-			} catch (err) {
-				console.error("Error loading default map:", err);
-				alert("Could not load default map. Please select your version of CoastalUnits.json");
-			}
-		} else if (mapMode === "new-map") {
-				document.getElementById('confirmationMessage').style.display = 'none';
-				initMap(null);
-				return;
-		}
-	}
-	
-	// Clean up map if already loaded			
 	if (map) {
-		
+		// Clean up map if already loaded			
 		if ( polygons.length !== 0 ) {
-			const saveFirst = confirm("Do you want to save Coastal Units before resetting the map?");
+			const saveFirst = confirm("Do you want to save existing NB3 Units before resetting the map?");
 
 			if (saveFirst) {
 				try {
@@ -93,37 +90,68 @@ async function loadMap() {
 		map.remove();   // Destroys the Leaflet map instance
 		document.getElementById('map').style.display = 'none';
 		map = null;     // Reset reference
-	}
+		
+		// Reset global variables
+		polygons = [];
+		locations = null;
+		glob_pilots = ["New Location"];
+		locationsCoords = [];
+		pilotMarkers.length = 0;
+		urlExists = false;
+		// Show confirmation screen again (initial page view)
+		showConfirmationMessage();
+		// Disable shape file loader
+		shapefileBtn.style.pointerEvents = 'none';
+		shapefileBtn.style.opacity = '0.5';
+		// Disable reset view Button
+		resetViewBtn.style.pointerEvents = 'none';
+		resetViewBtn.style.opacity = '0.5';
+		// Disable save locations Button
+		saveLocsBtn.style.pointerEvents = 'none';
+		saveLocsBtn.style.opacity = '0.5';
+		//toggleButtons(false);
+ 	}
 	
-	polygons = [];
-	locations = null;
-	glob_pilots = ["New Location"];
-	locationsCoords = [];
-	pilotMarkers.length = 0;
-	urlExists = false;
-	// Show confirmation screen again (initial page view)
-	showConfirmationMessage();
-	// Disable shape file loader
-	shapefileBtn.style.pointerEvents = 'none';
-	shapefileBtn.style.opacity = '0.5';
-	// Disable reset view Button
-	resetViewBtn.style.pointerEvents = 'none';
-	resetViewBtn.style.opacity = '0.5';
-	// Disable save locations Button
-	saveLocsBtn.style.pointerEvents = 'none';
-	saveLocsBtn.style.opacity = '0.5';
-	//toggleButtons(false);
-	
+	// Instructions screen → operate on map mode
 	if (mapMode == "rest-coast") {
+		try {
+			const response = await fetch("src/NB3UnitsRC.json");
+			if (!response.ok) throw new Error("Default JSON not found in the src/");
+			const JSONdata = await response.json();
+			document.getElementById('confirmationMessage').style.display = 'none';
+			initMap(JSONdata);
+			return;
+		} catch (err) {
+			console.error("Error loading Rest-Coast pilots:", err);
+			alert("Could not load Rest-Coast map. Please select .json file from directory");
+		}
+	} else if (mapMode == "waterlands") {
+		try {
+			const response = await fetch("src/NB3UnitsWL.json");
+			if (!response.ok) throw new Error("Default JSON not found in the src/");
+			const JSONdata = await response.json();
+			document.getElementById('confirmationMessage').style.display = 'none';
+			initMap(JSONdata);
+			return;
+		} catch (err) {
+			console.error("Error loading Waterlands pilots:", err);
+			alert("Could not load Waterlands map. Please select .json file from directory");
+		}
+	} else if (mapMode == "directory") {
 		// Reset file input value and trigger file input
 		fileInput.value = '';
 		fileInput.click();
+		fileInput.addEventListener('change', () => {
+			document.getElementById('confirmationMessage').style.display = 'none';
+		}, {once: true});
+		return;
 	} else if (mapMode === "new-map") {
-		document.getElementById('confirmationMessage').style.display = 'none';
-		initMap(null);
+			document.getElementById('confirmationMessage').style.display = 'none';
+			initMap(null);
+			return;
 	}
 }
-// Function to handle the coastal units file: geojson 
+// Function to handle the json file input 
 fileInput.addEventListener('change', function onFileChange(e) {
 	const file = e.target.files && e.target.files[0];
 	
@@ -139,20 +167,20 @@ fileInput.addEventListener('change', function onFileChange(e) {
 		try {
 			document.getElementById('confirmationMessage').style.display = 'none';
 			const jsonData = JSON.parse(event.target.result);
-			// If coastal units are loaded, then map is initialized with the data that is read from file
+			// initialize map with data from file input
 			initMap(jsonData);
 		} catch (error) {
 			console.error('Error parsing JSON:', error);
 			alert('Invalid file format. Please select JSON file.');
 		} finally {
-			// Reset input so selecting the same file again will trigger onchange
+			// Reset input to trigger onchange for same file selection
 			fileInput.value = "";
 		}
 	};
 	reader.readAsText(file);	
 });
 // ------------------------------------------------------------
-// End of loading existing polygons Routine
+// End of loading polygons routine
 // ------------------------------------------------------------
 
 // ------------------------------------------------------------
@@ -271,7 +299,7 @@ function createPolygonsFromGeoJson(data) {
 			isEditPolygon = false;
 			toggleButtons(true);
 			if (activePilot !== "") { addDrawTools() };
-			// Check if coastal units at a pilot site intersects (for display color purposes)
+			// Check if polygons in a pilot site intersects (for display color purposes)
 			checkIntersection(forPilot);	
 			return;
 		}
@@ -327,7 +355,7 @@ function createPolygonsFromGeoJson(data) {
 								"lng":turf.centroid(feature).geometry.coordinates[0]
 					},
 					"zoom": 13,
-					"coastalUnits": []
+					"NB3Units": []
 				};
 				locations.push(newPilot);
 
@@ -352,13 +380,13 @@ function createPolygonsFromGeoJson(data) {
 				// Add marker to map by default
 				//marker.addTo(map);
 			}			
-			// Check if the coastal units exists (let user overwrite coordinates)
+			// Check if the polygon exists (let user overwrite coordinates)
 			const existing = polygons.filter(p => p.options.pilot === pilot && p.options.delin === delin);
 			let targetPilot = locations.find(item => item.name === pilot);
-			const existingCU = targetPilot.coastalUnits.find(cu => cu.delin === delin);
+			const existingCU = targetPilot.NB3Units.find(cu => cu.delin === delin);
 			if (existing.length > 0) {
 				const confirmOverwrite = confirm(
-					`A coastal unit for pilot "${pilot}" with delineation "${delin}" already exists.\n\n` +
+					`NB3 Unit for location "${pilot}" with delineation "${delin}" already exists.\n\n` +
 					`Do you want to overwrite the shape?\n\n` +
 					`- Click OK to overwrite only the coordinates\n` +
 					`- Click Cancel to remove existing shape and load new one`
@@ -411,7 +439,7 @@ function createPolygonsFromGeoJson(data) {
 				});
 				
 				// Store in locations
-				targetPilot.coastalUnits.push({
+				targetPilot.NB3Units.push({
 				  delin,
 				  nbsBB,
 				  nbsFW,
@@ -457,8 +485,7 @@ function reorderPolygons(pilot) {
 	});
 }
 	
-// Show the intiail instructions when the project is run
-//window.onload = showConfirmationMessage;
+// When the map is loaded from url (single NB3 Unit), load only the NB3 Unit, otherwise initialize with instructions screen
 let urlExists = false;
 window.onload = async function() {
 	const params = new URLSearchParams(window.location.search);
@@ -471,42 +498,41 @@ window.onload = async function() {
 		const cuKey = cu.normalize("NFC").toLowerCase().trim();
 		const nbsKey = nbs.normalize("NFC").toLowerCase().trim();
 		try {
-			// The Coastal Units with url are extracted from a seperate json that includes polygons from diverse projects
+			// The NB3 Unit with an url is extracted from a global json that includes all polygons across diverse projects
 			// The owner of the project keeps track of this file in the project repository
-			const response = await fetch("src/CoastalUnitsAll.json");
-			if (!response.ok) throw new Error("Default JSON not found in the src/");
+			const response = await fetch("src/NB3UnitsALL.json");
+			if (!response.ok) throw new Error("Requested JSON not found in the src/");
 			const JSONdata = await response.json();
 			const JSONextract = JSONdata
 				.filter(p => p.name.normalize("NFC").toLowerCase().trim() === pilotKey)
 				.map(p => ({
 					...p,
-					coastalUnits: p.coastalUnits.filter(poly => 
+					NB3Units: p.NB3Units.filter(poly => 
 						poly.delin &&
 						poly.nbsBB &&
 						poly.delin.normalize("NFC").toLowerCase().trim() === cuKey && 
 						poly.nbsBB.normalize("NFC").toLowerCase().trim() === nbsKey
 					)
 				}))
-				.filter(p => p.coastalUnits.length > 0);
+				.filter(p => p.NB3Units.length > 0);
 			urlExists = true;
-			// If url belongs to an existing Coastal Unit, map is initialized,
-			// and otherwise, a user warning is displayed
+			// If NB3 Unit does not exist, a user warning is displayed
 			if (JSONextract.length > 0) {
 				initMap(JSONextract);
 			} else {
-				alert("The Coastal Unit does not exist in the current repository for the provided URL.\nPlease contact repository owner for an updated version.")
+				alert("The NB3 Unit cannot be loaded from URL!\nPlease contact the repository owner for an updated version.")
 			}				
 			return;
 		} catch (err) {
-			console.error("Error loading the Coastal Unit", err);
-			alert("Could not view the Coastal Unit. Please make sure there exists a correct link to the CoastalUnit.");
+			console.error("Error loading the NB3 Unit", err);
+			alert("Error loading shape! Please make sure the link is correct for the NB3 Unit.");
 			window.close();
 		}
 	} else {
 			showConfirmationMessage();
 	}
 }
-// Assign readMe.txt file with data paper information to the authors header
+// Assign readMe.txt file to the authors header with up to date information 
 document.querySelector("#authors span").addEventListener("click", function() {
 	// Specify the path to the text file: pre-defined
 	var filePath = "src/readMe.txt";
@@ -604,7 +630,7 @@ function addDrawEventListeners() {
 								"lng":turf.centroid(feature).geometry.coordinates[0]
 					},
 					"zoom": 13,
-					"coastalUnits": []
+					"NB3Units": []
 				};
 				locations.push(newPilot);
 				
@@ -657,7 +683,7 @@ function addDrawEventListeners() {
 			};
 			let targetPilot = locations.find(item => item.name === pilot_site);
 			if (targetPilot) {
-				targetPilot.coastalUnits.push(newUnit);
+				targetPilot.NB3Units.push(newUnit);
 			}
 
 			// Reset UI
@@ -695,7 +721,7 @@ function showModal(callback) {
 	
 	// Create heading
 	const heading = document.createElement("h3");
-	heading.textContent = "Select the pilot site:";
+	heading.textContent = "Select the location of interest:";
 	modalContent.appendChild(heading);
 	
 	// Dropdown + button wrapper
@@ -711,16 +737,11 @@ function showModal(callback) {
 	dflt.value = "";
 	dflt.disabled = true;
 	dflt.selected = true;
-	dflt.textContent = "Select Pilot";
+	dflt.textContent = "Select location";
 	dropdown.appendChild(dflt);
-	// Set the pilot names in the dropdown menu
+	// Set the location names in the dropdown menu
 	let pilots;
-	//if (mapMode ===  "rest-coast") {
-		//pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
 	pilots = glob_pilots;
-	//} else {
-	//	pilots = ["New Location"];
-	//}
 	pilots.forEach(pilot => {
 		const option = document.createElement("option");
 		option.value = pilot;
@@ -732,13 +753,13 @@ function showModal(callback) {
 	
 	// Create button to direct users to shared folders
 	const infoButton = document.createElement("button");
-	infoButton.textContent = "Go to Shared Folder";
+	infoButton.textContent = "Link to Shared Folder";
 	infoButton.disabled = true;
-	infoButton.title = "Click to open the shared folder for this site!"
+	infoButton.title = "Go to the shared folder of the selected location!"
 	
 	infoButton.addEventListener("click", () => {
 		if (activePilot !== "" && dropdown.value !== activePilot && dropdown.value !== "New Location") {
-			alert("Please verify the selected pilot site!");
+			alert("Please verify the selected location!");
 			return;
 		}
 		if (linksToSharedFolders[dropdown.value]) {
@@ -751,7 +772,7 @@ function showModal(callback) {
 	// Create inline tip text
 	const tipText = document.createElement("span");
 	tipText.innerHTML = 'Go to the shared folder to select the framework application data and copy the link below.<br>' +
-						  'Please use e.g. "The NB3 Instance newUnit1" to assign new data to the Coastal Unit.';
+						  'Please use e.g. "The NB3 Instance newUnit1" if a new NB3 Unit is created.';
 	tipText.style.color = "#003366";
 	tipText.style.fontStyle = "italic";
 	tipText.style.fontSize = "14px";
@@ -776,7 +797,7 @@ function showModal(callback) {
 	
 	// New location properties
 	const textFieldHeading = document.createElement("h4");
-	textFieldHeading.textContent = "Pilot Name";
+	textFieldHeading.textContent = "Location Name";
 	textFieldHeading.style.display = "none";
 	// Create input field for new location
 	const textField = document.createElement("input");
@@ -789,9 +810,9 @@ function showModal(callback) {
 		
 	// Create fields for user-defined coastal unit properties
 	let inputs = [
-		{ header: "Coastal Unit Code: ", id: "textField1", placeholder: "e.g. CU#1" },
+		{ header: "NB3 Unit Code: ", id: "textField1", placeholder: "e.g. CU#1" },
 		{ header: "NbS-driven Restoration Process: ", id: "textField2", placeholder: "e.g. Salt marsh revegetation" },
-		{ header: "Link to the data from the application of the framework: ", id: "textField3", placeholder: "https://..."}
+		{ header: "Link to the framework application data (shared directory): ", id: "textField3", placeholder: "https://..."}
 	];
 	inputs.forEach(input => {
 		// Create headings for coastal unit properties
@@ -814,12 +835,12 @@ function showModal(callback) {
 		// Retrieve user input
 		if (activePilot ) {
 			if (!dropdown.value || dropdown.value !== activePilot) {
-				alert("Please verify the selected pilot site!");
+				alert("Please verify the selected location!");
 				return;
 			}
 		} else {
 			if (!dropdown.value) {
-				alert("Please verify the selected pilot site!");
+				alert("Please verify the selected location!");
 				return;
 			}
 		}
@@ -880,7 +901,7 @@ resetViewBtn.addEventListener('click', function() {
 });
 
 // Add event listener to the save-locations-btn:
-// Save all the coastal units including user-defined and user-loaded
+// Save all the polygons to a local directory
 const saveLocsBtn = document.getElementById('save-locations-btn');
 // Disable the reset view button
 if (!map || polygons.length === 0) {
@@ -910,7 +931,7 @@ async function saveJSONToFile(data) {
 	const dd = String(now.getDate()).padStart(2, "0");
 	const hh = String(now.getHours()).padStart(2, "0");
 	const mi = String(now.getMinutes()).padStart(2, "0");
-	const fileName = `CoastalUnits_${yyyy}-${mm}-${dd}_${hh}h${mi}m.json`;
+	const fileName = `NB3Units_${yyyy}-${mm}-${dd}_${hh}h${mi}m.json`;
 	const options = {
 		suggestedName: fileName,
 		types: [
@@ -938,7 +959,7 @@ if (!map || polygons.length === 0) {
 	resetViewBtn.style.opacity = '0.5';
 }
 
-// Initialize and create the map with pre-defined coastal units as input
+// Initialize the map (with pre-defined NB3 units if inputted)
 async function initMap(inputJSON) {
 
 	document.getElementById('map').style.display = 'block';
@@ -979,16 +1000,16 @@ async function initMap(inputJSON) {
 	).addTo(map);
 	
 	// add custom labels to draw polygon tool
-	L.drawLocal.draw.toolbar.buttons.polygon = 'Draw a new Coastal Unit';
+	L.drawLocal.draw.toolbar.buttons.polygon = 'Draw a new NB3 Unit';
 
 	L.drawLocal.draw.handlers.polygon.tooltip = {
-	  start: 'Click to start drawing a Coastal Unit',
+	  start: 'Click to start drawing the NB3 Unit',
 	  cont: 'Click to continue drawing',
-	  end: 'Click first point to demarcate the Coastal Unit'
+	  end: 'Click first point to demarcate the NB3 Unit'
 	};
 
-	L.drawLocal.edit.toolbar.buttons.edit = 'Edit the Coastal Unit';
-	L.drawLocal.edit.toolbar.buttons.remove = 'Delete the Coastal Unit';
+	L.drawLocal.edit.toolbar.buttons.edit = 'Edit the NB3 Unit';
+	L.drawLocal.edit.toolbar.buttons.remove = 'Delete the NB3 Unit';
 	// add draw control events
 	addDrawEventListeners();
 	
@@ -998,10 +1019,9 @@ async function initMap(inputJSON) {
 			
 		// Loop through the locations data: pilot data and coastal units associated to each pilot
 		locations.forEach(function(place) {
-			// For each pilot, load the pilot shape if exists
+			// For each pilot, load the pilot scale shape if exists
 			if (place.coords && place.coords.length !== 0) {
-				//if (!Array.isArray(place.coords)) return; // safeguard
-
+				
 				let placeCoords;
 				if (place.coords[0].lat !== undefined) {
 					// Simple polygon → wrap once
@@ -1043,8 +1063,8 @@ async function initMap(inputJSON) {
 				});
 			}
 			
-			// For each pilot, define polygons from coastal unit geographical data
-			place.coastalUnits.forEach(function(polygonData) {
+			// For each pilot, convert NB3 units to leaflet polygons
+			place.NB3Units.forEach(function(polygonData) {
 				if (!polygonData.shp){			
 					
 					let polyOrMultipoly = [];
@@ -1095,7 +1115,7 @@ async function initMap(inputJSON) {
 											
 						assignPolygonEvents(polygon);
 						
-						// Add coastal units to polygons array
+						// Add polygon to polygons array
 						polygons.push(polygon);
 					});						
 				}	
@@ -1105,12 +1125,10 @@ async function initMap(inputJSON) {
 			// Add pilot to global placeholder
 			glob_pilots.splice(glob_pilots.length - 1, 0, place.name);
 			
-			// Check if coastal units at a pilot site intersects (for display color purposes)
-			// optional intersection check (implement later)
+			// Check if polygons at a pilot site intersects (for display color purposes)
 			if (typeof checkIntersection === 'function') checkIntersection(place.name);
 			
 			// Loop through the locations and add markers to the map for pilot locations
-			// Get pilot information dynamically
 			if (!place.description) {
 				place.description = getDescription(place.name);
 			}
@@ -1120,7 +1138,7 @@ async function initMap(inputJSON) {
 				title: place.name
 			});
 
-			marker.zoomLevel = place.zoom; // Custom zoom level property
+			marker.zoomLevel = place.zoom; // Custom zoom level 
 
 			// Store in group
 			pilotMarkers.push(marker);
@@ -1143,7 +1161,7 @@ async function initMap(inputJSON) {
 			}
 		});
 	} else {
-		//console.log("You have blank map!");
+		// blank map
 		activePilot = "";
 		// Initialize locations json
 		locations = [];
@@ -1158,7 +1176,6 @@ async function initMap(inputJSON) {
 	// Activate save locations Button
 	saveLocsBtn.style.pointerEvents = 'auto';
 	saveLocsBtn.style.opacity = '1';
-	//toggleButtons(true);
 	
 	// Reset global menu open flag
 	map.on('click', function() {
@@ -1182,7 +1199,7 @@ async function initMap(inputJSON) {
 	});
 	
 	// Create the legend element: Credentials for developer
-	map.attributionControl.addAttribution('&copy; Developed by Cengiz Arslan, 2024');
+	map.attributionControl.addAttribution('&copy; Developed by Cengiz Arslan, 2025');
 }
 ////////////////////////////////////////////////////
 // Auxiliary functions to support map operations///
@@ -1202,7 +1219,7 @@ function deletePolygon() {
 			rightClickMenu = false;
 		}
 						
-		// Extract the coastal unit code of the selected polygon
+		// Extract the NB3 unit code of the selected polygon
 		const delinToRemove =  selectedPolygon.options.delin;				
 		// Remove the selected polygon from the map
 		 polygons
@@ -1217,8 +1234,8 @@ function deletePolygon() {
 		
 		// Iterate through each pilot in the JSON array
 		locations.forEach(location => {
-			// Filter out the coastal unit according to the coastal unit code
-			location.coastalUnits = location.coastalUnits.filter(coastalUnit => coastalUnit.delin !== delinToRemove);
+			// Filter out the nb3 unit according to its code
+			location.NB3Units = location.NB3Units.filter(coastalUnit => coastalUnit.delin !== delinToRemove);
 		});
 		
 		// Reset selected polygon
@@ -1226,7 +1243,7 @@ function deletePolygon() {
 	}
 }
 
-// Function to handle edit action on the selected coastal unit
+// Function to handle edit action on the selected nb3 unit
 function editPolygon() {
 	// work on the polygon that is activated in the main routine
 	if (!selectedPolygon) return;
@@ -1242,7 +1259,7 @@ function editPolygon() {
 		rightClickMenu = false;
 	}
 	
-	// Extract pilot name and coastal unit code from the selected coastal unit
+	// Extract pilot name and nb3 unit code from the selected nb3 unit
 	const pilt = selectedPolygon.options.pilot;
 	const deli = selectedPolygon.options.delin;
 	const bb = selectedPolygon.options.nbsBB;
@@ -1265,13 +1282,13 @@ function editPolygon() {
 		selectedPolygon.options.nbsBB = building_block;
 		selectedPolygon.options.nbsFW = framework;
 		
-		// Find the coastal unit's pilot in the json array
+		// Find the nb3 unit's pilot in the json array
 		const matchingLocation = locations.find(location => location.name === pilt);
 		if (matchingLocation) {
-			// Find the coastal unit in json array according to the coastal unit code of the polygon
-			const matchingCoastalUnit = matchingLocation.coastalUnits.find(coastalUnit => coastalUnit.delin === deli && coastalUnit.nbsBB === bb);
+			// Find the nb3 unit in json array according to its code
+			const matchingCoastalUnit = matchingLocation.NB3Units.find(coastalUnit => coastalUnit.delin === deli && coastalUnit.nbsBB === bb);
 			if (matchingCoastalUnit) {
-				// Modify the properties of the coastal unit in the json array too
+				// Modify the properties of the nb3 unit in the json array too
 				matchingCoastalUnit.delin = delineation;
 				matchingCoastalUnit.nbsBB = building_block;
 				matchingCoastalUnit.nbsFW = framework;
@@ -1296,16 +1313,16 @@ function editPolygon() {
 		const modalContent = document.createElement("div");
 		modalContent.className = "modal-content";
 		
-		// Create heading for the specific coastal unit at a specific pilot
+		// Create heading for the specific nb3 unit at a specific pilot
 		const heading = document.createElement("h3");
 		heading.textContent = `Edit Properties of ${deliPlaceHolder} @${pilt}`;
 		modalContent.appendChild(heading);
 		
 		// Create heading for text fields
 		let fields = [
-			{ label: "Name of the Coastal Unit:", placeholder: deliPlaceHolder, id: "textField1" },
+			{ label: "The NB3 Unit's Code:", placeholder: deliPlaceHolder, id: "textField1" },
 			{ label: "NbS-driven Restoration Process:", placeholder: bbPlaceHolder, id: "textField2" },
-			{ label: "Link to Framework Application Data:", placeholder: fwPlaceHolder, id: "textField3" }
+			{ label: "Link to the Framework Application Data:", placeholder: fwPlaceHolder, id: "textField3" }
 		];
 		
 		fields.forEach(f => {
@@ -1325,15 +1342,13 @@ function editPolygon() {
     	buttonWrapper.style.marginLeft = "12px";
     	buttonWrapper.style.alignItems = "center";
 		buttonWrapper.style.marginTop = "10px"; 
-		
+			
 		// Create button to direct users to shared folders
 		const infoButton = document.createElement("button");
-		infoButton.textContent = "Go to Shared Folder";
-		infoButton.title = "Click to open the shared folder for this site!";
-		//const pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea"];
+		infoButton.textContent = "Link to Shared Folder";
+		infoButton.title = "Go to the shared folder of the selected location!";
 		let linkTo = "";
 		infoButton.addEventListener("click", () => {
-			//if (pilots.includes(pilt)) {
 			if (linksToSharedFolders[pilt]) {
 				linkTo = linksToSharedFolders[pilt];
 			} else {
@@ -1344,8 +1359,8 @@ function editPolygon() {
 		
 		// Create inline tip text
 		const tipText = document.createElement("span");
-		tipText.innerHTML = 'Go to the shared directory to select the framework application data and copy the link below.<br>' +
-							'Please use, e.g. "The NB3 Instance newUnit1", to assign new data file to the Coastal Unit.';
+		tipText.innerHTML = 'Go to the shared folder to select the framework application data and copy the link below.<br>' +
+							'Please use, e.g. "The NB3 Instance newUnit1", if a new NB Unit is created.';
 		tipText.style.color = "#003366";
 		tipText.style.fontStyle = "italic";
 		tipText.style.fontSize = "14px";
@@ -1381,7 +1396,7 @@ function editPolygon() {
 	}
 }
 
-// Function to handle changing the shape of coastal unit (polygon)
+// Function to handle changing the shape of a polygon
 function editPoints() {
 	// Work on the polygon that is activated in the main routine		
 	if (!selectedPolygon) return;
@@ -1416,7 +1431,7 @@ function doneEditing() {
 	
 	selectedPolygon.pm.disable();
 	
-	// Extract pilot name and coastal unit code 
+	// Extract pilot name and nb3 unit code 
 	const pilt = selectedPolygon.options.pilot;
 	const deli = selectedPolygon.options.delin;
 	const bb = selectedPolygon.options.nbsBB;
@@ -1438,10 +1453,10 @@ function doneEditing() {
 	// Extract the pilot from the user-loaded json data
 	const matchingLocation = locations.find(location => location.name === pilt);
 	if (matchingLocation) {
-		// Extract the coastal unit that has been modified
-		const matchingCoastalUnit = matchingLocation.coastalUnits.find(coastalUnit => coastalUnit.delin === deli && coastalUnit.nbsBB ===bb);
+		// Extract the nb3 unit that has been modified
+		const matchingCoastalUnit = matchingLocation.NB3Units.find(coastalUnit => coastalUnit.delin === deli && coastalUnit.nbsBB ===bb);
 		if (matchingCoastalUnit) {
-			// Update the coordinates of the modified coastal unit
+			// Update the coordinates of the modified nb3 unit
 			matchingCoastalUnit.coords = updatedCoordinates;
 		}
 	}
@@ -1459,7 +1474,7 @@ function doneEditing() {
 	// remove done editing button
 	document.getElementById("done-editing-btn").style.display = 'none';
 	
-	// Check if multiple coastal units at a pilot site intersects (for display color purposes)
+	// Check if multiple polygons at a pilot site intersects (for display color purposes)
 	const checkPolygons = polygons.filter(poly => poly.options.pilot == pilt);
 	if (checkPolygons.length > 1) {
 		checkIntersection(pilt);
@@ -1482,12 +1497,12 @@ function linkToPolygon() {
 	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}&nbs=${nbsID}`;
 
 	navigator.clipboard.writeText(urlPoly);
-	alert("Link to the Coastal Unit is copied:\n" + urlPoly);
+	alert("Link to the NB3 Unit is copied to clipboard:\n" + urlPoly);
 
 }
 // Disabling buttons when editing in action
 function toggleButtons(enable) {
-	const ids = ["reset-view-button", "load-locations-btn", "load-new-locations-btn", "save-locations-btn", "file-select-btn"];
+	const ids = ["reset-view-button", "load-locations-btn", "load-locations-btn-WL", "load-locations-btn-file", "load-new-locations-btn", "save-locations-btn", "file-select-btn"];
 	ids.forEach(id => {
 		const myBtn = document.getElementById(id);
 		if (enable) {
@@ -1601,7 +1616,7 @@ function getDescription(name) {
 	}
 }
 
-// Function to retrieve Coastal Unit's data
+// Function to retrieve NB3 Unit's data
 function openData(fileId) {
 	// Log the operation in console
 	console.log('Fetching the framework application data...');
@@ -1632,15 +1647,15 @@ function polyLocater(polygon) {
 	return L.latLng(maxLat, maxLng);
 }
 
-// Coastal landscape events
+// Location scale events
 function assignLocationEvents (polygon) {
 	// Assign Mouseover event
 	polygon.on('mouseover', function () {
 		if (isEditPolygon || rightClickMenu) return;
 		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
-			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Downscaled Coastal Zone</span>" + "<br>" +
-			"<strong>Pilot:</strong>" + (this.options.pilot || '') + "<br>" +
-			"<strong>Zone:</strong>" + (this.options.code || '') + "<br>" +
+			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Restoration Upscaling Zone</span>" + "<br>" +
+			"<strong>Location:</strong>" + (this.options.pilot || '') + "<br>" +
+			"<strong>Code:</strong>" + (this.options.code || '') + "<br>" +
 			"<strong>Area:</strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
 		const infoWindowLoc = polyLocater(this);
 		this.infoPopup = L.popup({closeButton: false , className: 'infoBox' })
@@ -1658,7 +1673,6 @@ function assignLocationEvents (polygon) {
 			this.infoPopup = null;
 		}
 	});
-	
 }
 
 // Polygon events
@@ -1668,7 +1682,7 @@ function assignPolygonEvents (polygon) {
 	polygon.on('mouseover', function () {
 		if (isEditPolygon || rightClickMenu) return;
 		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
-			"<p><strong>Coastal Unit: </strong>" + (this.options.delin || '') + "<br>" +
+			"<p><strong>NB3 Unit: </strong>" + (this.options.delin || '') + "<br>" +
 			"<strong>Restoration Process: </strong>" + (this.options.nbsBB || '') + "<br>" +
 			"<strong>Restored Area: </strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
 		const infoWindowLoc = polyLocater(this);
@@ -1712,31 +1726,37 @@ function assignPolygonEvents (polygon) {
 			this.infoPopup = null;
 		}
 		
-		const menu = '<div style="line-height:1.3; font-family: \"Times New Roman\", serif; font-style: italic; font-size: 14px;">' +
+		
+		let menu = '<div style="line-height:1.3; font-family: \"Times New Roman\", serif; font-style: italic; font-size: 14px;">' +
 				'<div style="padding: 3px 3px; font-weight: bold; border-bottom: 1px solid #666;">' +
-					'Coastal Unit: ' + this.options.delin + '</div>' +
+					this.options.delin + '</div>' +
 				'<div style="padding: 3px 3px; cursor: pointer; border-bottom: 1px solid #ccc;"' +
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="editPolygon()">Edit Coastal Unit</div>' +
+					'onclick="editPolygon()">Edit NB3 Unit</div>' +
 				'<div style="padding: 3px 3px; cursor: pointer; border-bottom: 1px solid #ccc;"' + 
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="editPoints()">Modify Coastal Unit</div>' +
+					'onclick="editPoints()">Modify NB3 Unit</div>' +
 				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="deletePolygon()">Delete Coastal Unit</div>' + 
+					'onclick="deletePolygon()">Delete NB3 Unit</div>' + 
 				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="toggleView()">Toggle Zone View</div>' +
-				'<div style="padding: 3px 3px; cursor: pointer;" ' + 
-					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
-					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="linkToPolygon()">Link to Coastal Unit</div>' + 
+					'onclick="linkToPolygon()">Link to NB3 Unit</div>' + 
 				'</div>';
-				
+		
+		// Check if upscaled landscape zone exists for extra right click menu option
+		const hasUpscaled = locationsCoords && locationsCoords.some(loc => loc.options.pilot === this.options.pilot);
+		if (hasUpscaled) {
+			menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
+					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
+					'onmouseout="this.style.backgroundColor=\'white\'" '+
+					'onclick="toggleView()">Toggle Upscaled Zone</div>';
+		}
+		
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
 		this.menuPopup = L.popup({ closeButton: false , className: 'menuPopup' })
 		 .setLatLng(menuWindowLoc)
@@ -1835,13 +1855,13 @@ function assignMarkerEvents (marker) {
 	});
 }
 
-// Function to check if coastal units at a specific pilot instersects 
+// Function to check if nb3 units at a specific pilot instersects 
 function checkIntersection(atPilot) {
 	
-	// Filter the coastal units at pilot being checked
+	// Filter the nb3 units at pilot being checked
 	var checkPolygons = polygons.filter(p => p.options && p.options.pilot === atPilot);
 	
-	// Set the display properties for each coastal unit at pilot 
+	// Set the display properties for each nb3 unit at pilot 
 	checkPolygons.forEach(function(checkP) {
 		checkP.setStyle({
 			color: '#08d600',
@@ -1860,7 +1880,7 @@ function checkIntersection(atPilot) {
 	
 	if (checkPolygons.length <= 1) return; // nothing to intersect
 	
-	// Function to generate distinct colors to fill Coastal Units
+	// Function to generate distinct colors to fill polygons
 	function generateColors(n) {
 		const colors = [];
 		for (let i = 0; i<n; i++) {
@@ -1874,10 +1894,10 @@ function checkIntersection(atPilot) {
 	const colorP = generateColors(numCU);
 	let colorInd = 0;
 	
-	// Check if there exists multiple coastal units at pilot			
+	// Check if there exists multiple nb3 units at pilot			
 	for (let i = 0; i < checkPolygons.length; i++) {
 		for (let j = i + 1; j < checkPolygons.length; j++) {
-			// Skip polygons in the same Coastal Unit
+			// Skip polygons in the same nb3 Unit
 			if (checkPolygons[i].options.delin === checkPolygons[j].options.delin) continue;
 			
 			// Convert Leaflet polygons to Turf polygons
@@ -1904,7 +1924,7 @@ function checkIntersection(atPilot) {
 				colorInd++;
 			  }
 			} catch (err) {
-			  console.warn(`Intersection failed at ${atPilot} for Coastal Unit ${checkPolygons[i].options.delin} and Coastal Unit ${checkPolygons[j].options.delin}. ${err}`);
+			  console.warn(`Intersection failed at ${atPilot} for NB3 Unit ${checkPolygons[i].options.delin} and NB3 Unit ${checkPolygons[j].options.delin}. ${err}`);
 			}
 		}
 	}			

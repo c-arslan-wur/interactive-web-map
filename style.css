@@ -34,18 +34,30 @@ html, body {
 #reset-view-button {
 	top: 2px;
 }
-/* Button to load polygon data for coastal units from local drive */
+/* Button to load polygon data for rest-coast */
 #load-locations-btn {
 	top: 27px;
 }
 
-/* Button to load new map */
-#load-new-locations-btn {
+/* Button to load polygon data for waterlands */
+#load-locations-btn-WL {
 	top: 27px;
-	right: 125px;
+	right: 57px;
 }
 
-/* Button to save polygon data for coastal units to local drive */
+/* Button to load polygon data from local drive */
+#load-locations-btn-file {
+	top: 27px;
+	right: 162px;
+}
+
+/* Button to load blank map */
+#load-new-locations-btn {
+	top: 27px;
+	right: 106px;
+}
+
+/* Button to save polygon data to local drive */
 #save-locations-btn {
 	top: 52px;
 }
@@ -53,7 +65,7 @@ html, body {
 #file-select-btn {
 	top: 77px;
 }
-/* Button to download geojson converted */
+/* Button to download geojson converter */
 #download-shp-to-geojson {
 	top: 77px;
 	right: 125px;
