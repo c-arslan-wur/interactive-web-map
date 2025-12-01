@@ -1494,7 +1494,7 @@ function linkToPolygon() {
 	const pilotID = encodeURIComponent(selectedPolygon.options.pilot);
 	const cuID = encodeURIComponent(selectedPolygon.options.delin);
 	const nbsID = encodeURIComponent(selectedPolygon.options.nbsBB);
-	const urlPoly = `${window.location.origin}${window.location.pathname}?pilot=${pilotID}&cu=${cuID}&nbs=${nbsID}`;
+	const urlPoly = `${window.location.origin}${window.location.pathname}?nb3L=${pilotID}&nb3U=${cuID}&nb3P=${nbsID}`;
 
 	navigator.clipboard.writeText(urlPoly);
 	alert("Link to the NB3 Unit is copied to clipboard:\n" + urlPoly);
