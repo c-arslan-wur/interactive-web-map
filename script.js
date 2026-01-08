@@ -1694,13 +1694,13 @@ function assignPolygonEvents (polygon) {
 
 	// Add mouseout event listener to close info window when mouse leaves polygon
 	// Mouseout: hide info box
-	/* polygon.on('mouseout', function () {
+	polygon.on('mouseout', function () {
 		if (rightClickMenu) return;
 		if (this.infoPopup && map.hasLayer(this.infoPopup)) {
 			map.closePopup(this.infoPopup);
 			this.infoPopup = null;
 		}
-	}); */
+	});
 	
 	// Add left-click event listener to the polygon
 	// Left-click: open framework link
@@ -1816,13 +1816,13 @@ function assignMarkerEvents (marker) {
 	
 	// Add mouseout event listener
 	// Mouseout: hide info box
-	/* marker.on('mouseout', function () {
+	marker.on('mouseout', function () {
 		setTimeout(() => {
 			if (!marker.getPopup()._container.matches(":hover")) {
 				marker.closePopup();
 			}
 		}, 200);
-	}); */
+	});
 	
 	// Add event listener for marker left-click
 	// Click → zoom to site, show polygons
