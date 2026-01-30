@@ -22,6 +22,9 @@ let ReadmeTab = null;
 // global location names
 //var glob_pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
 var glob_pilots = ["New Location"];
+// Initializing biotope overlays
+let biotopeLayers = {};
+let biotopeControl = null;
 
 // Function to display the initial instructions when the project is run
 document.getElementById('confirmationMessage').style.display = 'none';
@@ -898,6 +901,9 @@ resetViewBtn.addEventListener('click', function() {
 	// Hide draw control
 	removeDrawTools();
 	
+	// Remove biotope layers if any
+	resetBiotopes();
+	
 });
 
 // Add event listener to the save-locations-btn:
@@ -966,38 +972,88 @@ async function initMap(inputJSON) {
 	
 	// Open Street Map
 	const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	  maxZoom: 19,
+	  maxZoom: 20,
 	  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+	});
+	
+	// Open Street Map - Topographic
+	const osm_topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+	  maxZoom: 20,
+	  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
 	});
 
 	// ESRI Satellite
 	const esriSat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-		maxZoom: 19,
+		maxZoom: 20,
 		attribution: '&copy; Esri & contributors'
-	  }
-	);
+	});
 
 	// Hybrid (labels on top of satellite)
 	const esriLabels = L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-		maxZoom:19,
+		maxZoom: 20,
 		attribution: '&copy; Esri',
 		pane: 'overlayPane'
-	  }
-	);
+	});
 	
+	// EMODnet layers
+	// Get layer through function by connecting to any wms tile server
+	function getEmodNet(emodnet_wms, emodnet_layer, emodnet_style, emodnet_title) {
+		return {
+			title: emodnet_title,
+			layer: L.tileLayer.wms(emodnet_wms, {
+				layers: emodnet_layer,
+				styles: emodnet_style || '',
+				format: 'image/png',
+				transparent: true,
+				attribution: '&copy; EMODnet ' + emodnet_title,
+				maxZoom: 20,
+				pane: 'overlayPane'
+			})
+		};
+	}
+	
+	// List of EMODnet WMS to be included in the map
+	const bathWMS = 'https://ows.emodnet-bathymetry.eu/wms';
+	const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
+	
+	// Initialize the layers to be added to the map
+	const emodnetLayers = [
+		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Low Tide'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_msl', 'Coastline - Sea Level'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide'),
+		getEmodNet(habWMS, 'annexiMaps_all', null, 'Habitats - ...')
+	];
+	
+	// Initialize overlays in the leaflet format
+	const mapOverlays = {'Labels (ESRI)': esriLabels};
+	emodnetLayers.forEach(lay => {
+		mapOverlays[lay.title] = lay.layer;
+	});
+		
 	// Initialize map
 	map = L.map('map').setView([originalCenter.lat, originalCenter.lng], originalZoom);
+	// Create the legend element: Credentials for developer
+	map.attributionControl.addAttribution('&copy; Tool developed by C. Arslan, 2025');
 	map.addLayer(esriSat);
 
 	// Add control
 	L.control.layers(
 	  {
-		"Satellite": esriSat,
-		"Open Street Map": osm
+		"ESRI Satellite": esriSat,
+		"OpenStreetMap": osm,
+		"OSM Topographic": osm_topo
 	  },
-	  { "Labels": esriLabels },
+	  mapOverlays,
 	  { position: 'topleft' }
 	).addTo(map);
+	
+	// Add scale bar
+	L.control.scale({
+		position: 'bottomleft',
+		metric: true,
+		imperial: false
+	}).addTo(map);
 	
 	// add custom labels to draw polygon tool
 	L.drawLocal.draw.toolbar.buttons.polygon = 'Draw a new NB3 Unit';
@@ -1192,14 +1248,13 @@ async function initMap(inputJSON) {
 			removeDrawTools();
 			locationsCoords.length && locationsCoords.forEach(p => map.hasLayer(p) && map.removeLayer(p));
 			polygons.forEach(p => map.hasLayer(p) && map.removeLayer(p));
+			resetBiotopes();
 		}
 		map.getZoom() >= 6
 			? pilotMarkers.forEach(m => map.hasLayer(m) && map.removeLayer(m))
 			: pilotMarkers.forEach(m => !map.hasLayer(m) && m.addTo(map));
 	});
 	
-	// Create the legend element: Credentials for developer
-	map.attributionControl.addAttribution('&copy; Developed by Cengiz Arslan, 2025');
 }
 ////////////////////////////////////////////////////
 // Auxiliary functions to support map operations///
@@ -1716,7 +1771,7 @@ function assignPolygonEvents (polygon) {
 							
 	// Add richt-click event listener to the polygon
 	// Right-click: custom context menu
-	polygon.on('contextmenu', function (e) {
+	polygon.on('contextmenu', async function (e) {
 		if (isEditPolygon || rightClickMenu) return;
 		
 		L.DomEvent.preventDefault(e); // block browser’s native context menu
@@ -1757,6 +1812,20 @@ function assignPolygonEvents (polygon) {
 					'onclick="toggleView()">Toggle Upscaled Zone</div>';
 		}
 		
+		// Check if biotope layers exists
+		const basePath = `data/${this.options.pilot}/${this.options.delin}`;
+		try {
+			const response = await fetch(basePath + 'biotopes.json');
+			if (response.ok) {
+				menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
+							'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
+							'onmouseout="this.style.backgroundColor=\'white\'" '+
+							'onclick="loadBiotopes().catch(console.error)">Load Biotope Layers</div>';  
+			}
+		} catch (e) {
+			console.log(`No biotope layers exists for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}: `, e);
+		}
+				
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
 		this.menuPopup = L.popup({ closeButton: false , className: 'menuPopup' })
 		 .setLatLng(menuWindowLoc)
@@ -1928,6 +1997,68 @@ function checkIntersection(atPilot) {
 			}
 		}
 	}			
+}
+
+// Function that loads biotope layers per pilot if exists (Baseline Ecological Assessment)
+async function loadBiotopes() {
+	// Work on the polygon that is activated in the main routine		
+	if (!selectedPolygon) return;
+				
+	// close the menu
+	if (selectedPolygon.menuPopup && map.hasLayer(selectedPolygon.menuPopup)) {
+		selectedPolygon.menuPopup.remove();
+		selectedPolygon.menuPopup = null;
+		rightClickMenu = false;
+	}
+	
+	// first, reset biotopes
+	resetBiotopes();
+	const basePath = `data/${selectedPolygon.options.pilot}/${selectedPolygon.options.delin}`;
+
+	try {
+		const response = await fetch(basePath + 'biotopes.json');
+		if (!response.ok) throw new Error('No biotope manifest');
+		const config = await response.json();
+
+		biotopeLayers = {};
+
+		for (const layer of config.layers) {
+		  const geojson = await fetch(basePath + layer.file).then(r => r.json());
+
+		  const leafletLayer = L.geoJSON(geojson, {
+			style: {
+			  color: layer.color,
+			  weight: 1,
+			  fillOpacity: 0.6
+			}
+		  });
+
+		  biotopeLayers[layer.name] = leafletLayer;
+		}
+
+		biotopeControl = L.control.layers(
+		  null,
+		  biotopeLayers,
+		  { collapsed: false }
+		).addTo(map);
+
+	} catch (e) {
+		console.log('No biotopes for this pilot', e);
+	}
+}
+
+// Resetting biotope layers when pilot is not active
+function resetBiotopes() {
+  if (biotopeControl) {
+    biotopeControl.remove();
+    biotopeControl = null;
+  }
+
+  Object.values(biotopeLayers).forEach(layer => {
+    map.removeLayer(layer);
+  });
+
+  biotopeLayers = {};
 }
 
 // Function to open readme document in a new tab
