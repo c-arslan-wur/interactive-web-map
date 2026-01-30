@@ -1813,7 +1813,7 @@ function assignPolygonEvents (polygon) {
 		}
 		
 		// Check if biotope layers exists
-		const basePath = `data/${this.options.pilot}/${this.options.delin}`;
+		const basePath = `data/${this.options.delin}`;
 		try {
 			const response = await fetch(basePath + 'biotopes.json');
 			if (response.ok) {
@@ -2013,7 +2013,7 @@ async function loadBiotopes() {
 	
 	// first, reset biotopes
 	resetBiotopes();
-	const basePath = `data/${selectedPolygon.options.pilot}/${selectedPolygon.options.delin}`;
+	const basePath = `data/${selectedPolygon.options.delin}`;
 
 	try {
 		const response = await fetch(basePath + 'biotopes.json');
