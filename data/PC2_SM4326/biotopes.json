@@ -4,42 +4,42 @@
     {
       "name": "MA251*-MA253* Artificial Salt Marshes",
       "file": "MA251_MA253_Artificial_Salt_Marshes.geojson",
-      "color": "#4CAF50"
+      "color": "#7FC97F"
     },
     {
       "name": "MA251-MA253 Natural Salt Marshes",
       "file": "MA251_MA253_Natural_Salt_Marshes.geojson",
-      "color": "#2E7D32"
+      "color": "#1B9E77"
     },
     {
       "name": "MA6511* Mudflats, degraded Artificial Salt Marshes",
       "file": "MA6511_Mudflats_degraded_Artificial_Salt_Marshes.geojson",
-      "color": "#2E7D32"
+      "color": "#FDC086"
+    },
+    {
+      "name": "MA6511 Natural Mudflats",
+      "file": "MA6511_Natural_Mudflats.geojson",
+      "color": "#A6761D"
     },
     {
       "name": "MB45 Mixed Sediments, high current velocity",
       "file": "MB45_Mixed_Sediments_High_Current_Velocity.geojson",
-      "color": "#2E7D32"
+      "color": "#B3DE69"
     },
     {
       "name": "MB65 Unvegetated Muds, weak current velocity",
       "file": "MB65_Unvegetated_Muds_Weak_Current_Velocity.geojson",
-      "color": "#2E7D32"
+      "color": "#FDB462"
     },
     {
       "name": "MB553-MB554-MB6562 Seagrass Meadows",
       "file": "MB553_MB554_MB6562_Seagrass_Meadows.geojson",
-      "color": "#2E7D32"
-    },
-    {
-      "name": "MA251-MA253 Natural Salt Marshes",
-      "file": "MA251_MA253_Natural_Salt_Marshes.geojson",
-      "color": "#2E7D32"
+      "color": "#386CB0"
     },
     {
       "name": "MB5532-MB5535 Muddy Sands, weak current velocity",
       "file": "MB5532_MB5535_Muddy_Sands_Weak_Current_Velocity.geojson",
-      "color": "#2E7D32"
+      "color": "#FF7F00"
     }
   ]
 }
