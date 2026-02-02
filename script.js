@@ -5,26 +5,29 @@ let rightClickMenu = false;
 let mapMode = ""; //"rest-coast", "waterlands", "directory", or "new-map"
 
 // Setting the map view
-var originalZoom = 4;
-var originalCenter = {lat: 43.0000, lng: 10.0000};
+let originalZoom = 4;
+let originalCenter = {lat: 43.0000, lng: 10.0000};
 // Initializing array for coastal units 
-var polygons = [];
+let polygons = [];
 // Initializing global variables
 //var contextMenu;
-var locations;
-var locationsCoords = [];
-var isEditPolygon = false;
+let locations;
+let locationsCoords = [];
+let isEditPolygon = false;
 // Create a marker group to manage them globally
-var pilotMarkers = [];
+let pilotMarkers = [];
 let activePilot;
 // Placeholder for Readme tab
 let ReadmeTab = null;
 // global location names
 //var glob_pilots = ["Arcachon Bay", "Ebro Delta", "Foros Bay", "Nahal Dalia", "Rhone Delta", "Sicily Lagoon", "Venice Lagoon", "Vistula Lagoon", "Wadden Sea", "New Location"];
-var glob_pilots = ["New Location"];
+let glob_pilots = ["New Location"];
+// Define global layer Object
+let layerControl = null;
+let baseLayers = {};
+let mapOverlays = {};
 // Initializing biotope overlays
 let biotopeLayers = {};
-let biotopeControl = null;
 
 // Function to display the initial instructions when the project is run
 document.getElementById('confirmationMessage').style.display = 'none';
@@ -995,6 +998,12 @@ async function initMap(inputJSON) {
 		pane: 'overlayPane'
 	});
 	
+	baseLayers = {
+		"ESRI Satellite": esriSat,
+		"OpenStreetMap": osm,
+		"OSM Topographic": osm_topo
+	};
+	
 	// EMODnet layers
 	// Get layer through function by connecting to any wms tile server
 	function getEmodNet(emodnet_wms, emodnet_layer, emodnet_style, emodnet_title) {
@@ -1014,21 +1023,25 @@ async function initMap(inputJSON) {
 	
 	// List of EMODnet WMS to be included in the map
 	const bathWMS = 'https://ows.emodnet-bathymetry.eu/wms';
-	const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
+	//const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
 	
 	// Initialize the layers to be added to the map
 	const emodnetLayers = [
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Low Tide'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_msl', 'Coastline - Sea Level'),
-		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide'),
-		getEmodNet(habWMS, 'annexiMaps_all', null, 'Habitats - ...')
+		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide')//,
+		//getEmodNet(habWMS, 'annexiMaps_all', null, 'Habitats - ...')
 	];
 	
 	// Initialize overlays in the leaflet format
-	const mapOverlays = {'Labels (ESRI)': esriLabels};
+	mapOverlays = {
+		"Esri Services": {'Labels (ESRI)': esriLabels},
+		"EMODnet Services" : {}
+	};
+		
 	emodnetLayers.forEach(lay => {
-		mapOverlays[lay.title] = lay.layer;
+		mapOverlays["EMODnet Services"][lay.title] = lay.layer;
 	});
 		
 	// Initialize map
@@ -1038,15 +1051,7 @@ async function initMap(inputJSON) {
 	map.addLayer(esriSat);
 
 	// Add control
-	L.control.layers(
-	  {
-		"ESRI Satellite": esriSat,
-		"OpenStreetMap": osm,
-		"OSM Topographic": osm_topo
-	  },
-	  mapOverlays,
-	  { position: 'topleft' }
-	).addTo(map);
+	updateLayerControl();
 	
 	// Add scale bar
 	L.control.scale({
@@ -1816,14 +1821,20 @@ function assignPolygonEvents (polygon) {
 		const basePath = `data/${this.options.delin}/`;
 		try {
 			const response = await fetch(basePath + 'biotopes.json');
-			if (response.ok) {
+			if (!response.ok){
+				console.log(`No biotope layers exists for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
+				return;
+			}
+			const biotopesLoaded = Boolean(mapOverlays?.Biotopes?.[this.options.delin]);
+			if (!biotopesLoaded) {
 				menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
-							'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
-							'onmouseout="this.style.backgroundColor=\'white\'" '+
-							'onclick="loadBiotopes().catch(console.error)">Load Biotope Layers</div>';  
+						'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
+						'onmouseout="this.style.backgroundColor=\'white\'" '+
+						'onclick="loadBiotopes().catch(console.error)">Baseline Ecological Assessment</div>';  
 			}
 		} catch (e) {
-			console.log(`No biotope layers exists for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}: `, e);
+			console.log('Unexpected error! Please contact the developer with the error code: ', e);
+			
 		}
 				
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
@@ -1999,6 +2010,19 @@ function checkIntersection(atPilot) {
 	}			
 }
 
+// Function to update layer control
+function updateLayerControl() {
+	if (layerControl) {
+		map.removeControl(layerControl);
+	}
+	
+	layerControl = L.control.groupedLayers(
+		baseLayers,
+		mapOverlays,
+		{ position: 'topleft' }
+	).addTo(map);
+}
+
 // Function that loads biotope layers per pilot if exists (Baseline Ecological Assessment)
 async function loadBiotopes() {
 	// Work on the polygon that is activated in the main routine		
@@ -2035,12 +2059,11 @@ async function loadBiotopes() {
 
 		  biotopeLayers[layer.name] = leafletLayer;
 		}
+		
+		mapOverlays["Biotopes"] = mapOverlays["Biotopes"] || {};
+		mapOverlays["Biotopes"][selectedPolygon.options.delin]	= biotopeLayers;
 
-		biotopeControl = L.control.layers(
-		  null,
-		  biotopeLayers,
-		  { collapsed: false }
-		).addTo(map);
+		updateLayerControl();
 
 	} catch (e) {
 		console.log('No biotopes for this pilot', e);
@@ -2049,16 +2072,12 @@ async function loadBiotopes() {
 
 // Resetting biotope layers when pilot is not active
 function resetBiotopes() {
-  if (biotopeControl) {
-    biotopeControl.remove();
-    biotopeControl = null;
-  }
+	if (biotopeLayers) {
+		biotopeLayers = {};
+		delete mapOverlays["Biotopes"];
+	}
 
-  Object.values(biotopeLayers).forEach(layer => {
-    map.removeLayer(layer);
-  });
-
-  biotopeLayers = {};
+	updateLayerControl();
 }
 
 // Function to open readme document in a new tab
