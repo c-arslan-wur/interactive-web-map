@@ -991,18 +991,28 @@ async function initMap(inputJSON) {
 		attribution: '&copy; Esri & contributors'
 	});
 
-	// Hybrid (labels on top of satellite)
-	const esriLabels = L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-		maxZoom: 20,
-		attribution: '&copy; Esri',
-		pane: 'overlayPane'
-	});
-	
 	baseLayers = {
 		"ESRI Satellite": esriSat,
 		"OpenStreetMap": osm,
 		"OSM Topographic": osm_topo
 	};
+
+	// Initialize map
+	map = L.map('map').setView([originalCenter.lat, originalCenter.lng], originalZoom);
+	// Create the legend element: Credentials for developer
+	map.attributionControl.addAttribution('&copy; Tool developed by C. Arslan, 2025');
+	map.addLayer(esriSat);
+
+	map.createPane('backgroundPane');
+	map.getPane('backgroundPane').style.zIndex = 300;
+	map.getPane('backgroundPane').style.pointerEvents = 'none';
+
+	// Hybrid (labels on top of satellite)
+	const esriLabels = L.tileLayer('https://services.arcgisonline.com/arcgis/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+		maxZoom: 20,
+		attribution: '&copy; Esri',
+		pane: 'backgroundPane'
+	});
 	
 	// EMODnet layers
 	// Get layer through function by connecting to any wms tile server
@@ -1016,7 +1026,7 @@ async function initMap(inputJSON) {
 				transparent: true,
 				attribution: '&copy; EMODnet ' + emodnet_title,
 				maxZoom: 20,
-				pane: 'overlayPane'
+				pane: 'backgroundPane'
 			})
 		};
 	}
@@ -1030,7 +1040,8 @@ async function initMap(inputJSON) {
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Low Tide'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_msl', 'Coastline - Sea Level'),
-		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide')//,
+		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide'),
+		getEmodNet(bathWMS, 'emodnet:slope', null, 'Bathymetry - Seafloor Slope')//,
 		//getEmodNet(habWMS, 'annexiMaps_all', null, 'Habitats - ...')
 	];
 	
@@ -1044,12 +1055,6 @@ async function initMap(inputJSON) {
 		mapOverlays["EMODnet Services"][lay.title] = lay.layer;
 	});
 		
-	// Initialize map
-	map = L.map('map').setView([originalCenter.lat, originalCenter.lng], originalZoom);
-	// Create the legend element: Credentials for developer
-	map.attributionControl.addAttribution('&copy; Tool developed by C. Arslan, 2025');
-	map.addLayer(esriSat);
-
 	// Add control
 	updateLayerControl();
 	
@@ -1818,7 +1823,7 @@ function assignPolygonEvents (polygon) {
 		}
 			
 		// Check if biotope layers exists for a right click menu item
-		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {}).some(key => key.startsWith(`${this.options.delin} - `));
+		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {}).some(key => key.startsWith(`${this.options.delin}: `));
 		if (!biotopesLoaded) {
 			const basePath = `data/${this.options.delin}/`;
 			try {
@@ -2076,10 +2081,11 @@ async function loadBiotopes() {
 				const geojson = await isBiotopeLayer.json();
 						
 				const leafletLayer = L.geoJSON(geojson, {
+					pane: 'backgroundPane',
 					style: {
 					  color: layer.color,
 					  weight: 1,
-					  fillOpacity: 0.6
+					  fillOpacity: 0.4
 					}
 				});
 
@@ -2097,7 +2103,7 @@ async function loadBiotopes() {
 		
 		mapOverlays["Biotopes"] = mapOverlays["Biotopes"] || {};
 		for (const [layerName, layerShape] of Object.entries(biotopeLayers)) {
-			const label = `${selectedPolygon.options.delin} - ${layerName}`;
+			const label = `${selectedPolygon.options.delin}: ${layerName}`;
 			mapOverlays["Biotopes"][label]	= layerShape;
 		}
 
