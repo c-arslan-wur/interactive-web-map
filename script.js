@@ -1818,7 +1818,7 @@ function assignPolygonEvents (polygon) {
 		}
 			
 		// Check if biotope layers exists for a right click menu item
-		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {}).some(key => key.startsWith(`${this.options.delin} - `);
+		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {}).some(key => key.startsWith(`${this.options.delin} - `));
 		if (!biotopesLoaded) {
 			const basePath = `data/${this.options.delin}/`;
 			try {
