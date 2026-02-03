@@ -2082,6 +2082,7 @@ async function loadBiotopes() {
 						
 				const leafletLayer = L.geoJSON(geojson, {
 					pane: 'backgroundPane',
+					interactive: false,
 					style: {
 					  color: layer.color,
 					  weight: 1,
