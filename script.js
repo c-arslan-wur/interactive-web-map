@@ -1816,36 +1816,37 @@ function assignPolygonEvents (polygon) {
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
 					'onclick="toggleView()">Toggle Upscaled Zone</div>';
 		}
-		
+			
 		// Check if biotope layers exists for a right click menu item
-		const basePath = `data/${this.options.delin}/`;
-		try {
-			const response = await fetch(basePath + 'biotopes.json');
-			
-			if (!response.ok){
-				console.log(`Biotope check cannot be done for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
-				return;
-			}	
-			
-			// Check the coastal unit file for available biotopes
-			const biotopeCheck = await response.json();
-			if (!Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length === 0){
-				console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
-				return;
-			}
-			
-			const biotopesLoaded = Boolean(mapOverlays?.Biotopes?.[this.options.delin]);
-			if (!biotopesLoaded]) {
+		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {}).some(key => key.startsWith(`${this.options.delin} - `);
+		if (!biotopesLoaded) {
+			const basePath = `data/${this.options.delin}/`;
+			try {
+				const response = await fetch(basePath + 'biotopes.json');
+				
+				if (!response.ok){
+					console.log(`Biotope check cannot be done for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
+					return;
+				}	
+				
+				// Check the coastal unit file for available biotopes
+				const biotopeCheck = await response.json();
+				if (!Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length === 0){
+					console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
+					return;
+				}
+				
 				menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
 						'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 						'onmouseout="this.style.backgroundColor=\'white\'" '+
 						'onclick="loadBiotopes().catch(console.error)">Baseline Ecological Assessment</div>';  
+			
+			} catch (e) {
+				console.log("Unexpected network error in accessing the directory: ",e);
+				return;
 			}
-		} catch (e) {
-			console.log("Unexpected network error in accessing the directory: ",e);
-			return;
 		}
-					
+		
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
 		this.menuPopup = L.popup({ closeButton: false , className: 'menuPopup' })
 		 .setLatLng(menuWindowLoc)
