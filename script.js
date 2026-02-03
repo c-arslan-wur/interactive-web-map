@@ -1817,26 +1817,35 @@ function assignPolygonEvents (polygon) {
 					'onclick="toggleView()">Toggle Upscaled Zone</div>';
 		}
 		
-		// Check if biotope layers exists
+		// Check if biotope layers exists for a right click menu item
 		const basePath = `data/${this.options.delin}/`;
 		try {
 			const response = await fetch(basePath + 'biotopes.json');
+			
 			if (!response.ok){
-				console.log(`No biotope layers exists for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
+				console.log(`Biotope check cannot be done for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
+				return;
+			}	
+			
+			// Check the coastal unit file for available biotopes
+			const biotopeCheck = await response.json();
+			if (!Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length === 0){
+				console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
 				return;
 			}
+			
 			const biotopesLoaded = Boolean(mapOverlays?.Biotopes?.[this.options.delin]);
-			if (!biotopesLoaded) {
+			if (!biotopesLoaded]) {
 				menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
 						'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 						'onmouseout="this.style.backgroundColor=\'white\'" '+
 						'onclick="loadBiotopes().catch(console.error)">Baseline Ecological Assessment</div>';  
 			}
 		} catch (e) {
-			console.log('Unexpected error! Please contact the developer with the error code: ', e);
-			
+			console.log("Unexpected network error in accessing the directory: ",e);
+			return;
 		}
-				
+					
 		const menuWindowLoc = this.getBounds().getCenter();//polyLocater(this);
 		this.menuPopup = L.popup({ closeButton: false , className: 'menuPopup' })
 		 .setLatLng(menuWindowLoc)
@@ -2041,32 +2050,60 @@ async function loadBiotopes() {
 
 	try {
 		const response = await fetch(basePath + 'biotopes.json');
-		if (!response.ok) throw new Error('No biotope manifest');
-		const config = await response.json();
-
+		if (!response.ok){
+			console.log(`Biotope check cannot be done for the ${selectedPolygon.options.delin}`);
+			return;
+		}	
+		
+		// Check the coastal unit file for available biotopes
+		const biotopeFile = await response.json();
+		if (!biotopeFile.layers || biotopeFile.layers.length === 0){
+			console.log(`No biotope layers defined for the ${selectedPolygon.options.delin}`);
+			return;
+		}	
+		
 		biotopeLayers = {};
 
-		for (const layer of config.layers) {
-		  const geojson = await fetch(basePath + layer.file).then(r => r.json());
+		for (const layer of biotopeFile.layers) {
+			try {
+				const isBiotopeLayer = await fetch(basePath + layer.file);
+				if (!isBiotopeLayer.ok) {
+					console.log(`Biotope layer file not found or unreadable: ${layer.file} for ${selectedPolygon.options.delin}`);
+					continue;
+				}
+				
+				const geojson = await isBiotopeLayer.json();
+						
+				const leafletLayer = L.geoJSON(geojson, {
+					style: {
+					  color: layer.color,
+					  weight: 1,
+					  fillOpacity: 0.6
+					}
+				});
 
-		  const leafletLayer = L.geoJSON(geojson, {
-			style: {
-			  color: layer.color,
-			  weight: 1,
-			  fillOpacity: 0.6
+				biotopeLayers[layer.name] = leafletLayer;
+			} catch (e) {
+				console.log(`Error loading biotope layer "${layer.name}" for ${selectedPolygon.options.delin}:`,e);
 			}
-		  });
-
-		  biotopeLayers[layer.name] = leafletLayer;
+		}
+		
+		// If no biotope layers exist but could not be loaded
+		if (Object.keys(biotopeLayers).length === 0) {
+			console.log(`No valid biotope layers could be loaded for ${selectedPolygon.options.delin}`);
+			return;
 		}
 		
 		mapOverlays["Biotopes"] = mapOverlays["Biotopes"] || {};
-		mapOverlays["Biotopes"][selectedPolygon.options.delin]	= biotopeLayers;
+		for (const [layerName, layerShape] of Object.entries(biotopeLayers)) {
+			const label = `${selectedPolygon.options.delin} - ${layerName}`;
+			mapOverlays["Biotopes"][label]	= layerShape;
+		}
 
 		updateLayerControl();
 
 	} catch (e) {
-		console.log('No biotopes for this pilot', e);
+		console.log('Unexpected network error in accessing the directory: ', e);
 	}
 }
 
