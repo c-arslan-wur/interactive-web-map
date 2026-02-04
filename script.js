@@ -2127,7 +2127,7 @@ function resetBiotopes() {
 	// Remove visible biotope layers from the map (if any)
 	Object.values(biotopeLayers).forEach(layer => {
 		if(map.hasLayer(layer)) map.removeLayer(layer);
-	}
+	});
 	
 	// Reset object that stores biotope layers
 	biotopeLayers = {};
