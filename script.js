@@ -1839,6 +1839,7 @@ function assignPolygonEvents (polygon) {
 					const biotopeCheck = await response.json();
 					if (Array.isArray(biotopeCheck.layers) && biotopeCheck.layers.length > 0){
 						addBiotopeMenuItem = true;
+						console.log('Menu-time layers:', biotopeCheck.layers);
 					} else {
 						console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
 					}
@@ -2068,6 +2069,7 @@ async function loadBiotopes() {
 		const biotopeFile = await response.json();
 		if (!biotopeFile.layers || biotopeFile.layers.length === 0){
 			console.log(`No biotope layers defined for the ${selectedPolygon.options.delin}`);
+			console.log('Load-time layers:', biotopeFile.layers);
 			return;
 		}	
 		
