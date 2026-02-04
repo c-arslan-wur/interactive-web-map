@@ -1837,7 +1837,7 @@ function assignPolygonEvents (polygon) {
 				} else {
 					// Check the coastal unit file for available biotopes
 					const biotopeCheck = await response.json();
-					if (Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length > 0){
+					if (Array.isArray(biotopeCheck.layers) && biotopeCheck.layers.length > 0){
 						addBiotopeMenuItem = true;
 					} else {
 						console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
@@ -2120,10 +2120,17 @@ async function loadBiotopes() {
 
 // Resetting biotope layers when pilot is not active
 function resetBiotopes() {
-	if (biotopeLayers) {
-		biotopeLayers = {};
-		delete mapOverlays["Biotopes"];
+	if (Object.keys(biotopeLayers).length === 0) return;
+	
+	// Remove visible biotope layers from the map (if any)
+	Object.values(biotopeLayers).forEach(layer => {
+		if(map.hasLayer(layer)) map.removeLayer(layer);
 	}
+	
+	// Reset object that stores biotope layers
+	biotopeLayers = {};
+	delete mapOverlays["Biotopes"];
+		
 
 	updateLayerControl();
 }
