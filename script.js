@@ -1837,7 +1837,7 @@ function assignPolygonEvents (polygon) {
 				} else {
 					// Check the coastal unit file for available biotopes
 					const biotopeCheck = await response.json();
-					if (Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length === 0){
+					if (Array.isArray(biotopeCheck.layers) || biotopeCheck.layers.length > 0){
 						addBiotopeMenuItem = true;
 					} else {
 						console.log(`No biotope layers defined for the ${this.options.delin} Coastal Unit of the ${this.options.pilot}`);
