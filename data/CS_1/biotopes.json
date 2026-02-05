@@ -1,11 +1,8 @@
 {
   "group": "Biotopes",
   "layers": [
-     {
-      "name": "Test_test",
-      "file": "Test_test.geojson",
-      "color": "#7FC97F"
-    }   
+        
   ]
 
 }
+
