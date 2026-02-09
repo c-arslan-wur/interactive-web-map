@@ -182,3 +182,21 @@ h2 {
 
 }
 
+.map-legend {
+  background: rgba(255,255,255,0.5);
+  backdrop-filter: blur(2px);
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.3);
+  max-width: 125px;
+  max-height: none;
+  width:auto;
+  height:auto;
+}
+.map-legend img {
+  width: 100%;
+}
+
+.legend-block {
+  margin-bottom: 6px;
+}
