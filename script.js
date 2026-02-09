@@ -1014,6 +1014,12 @@ async function initMap(inputJSON) {
 		pane: 'backgroundPane'
 	});
 	
+	// Initialize overlays in the leaflet format
+	mapOverlays = {
+		"Esri Services": {'Labels (ESRI)': esriLabels},
+		"EMODnet Services" : {}
+	};
+
 	// EMODnet layers
 	// Get layer through function by connecting to any wms tile server
 	function getEmodNet(emodnet_wms, emodnet_layer, emodnet_style, emodnet_title) {
@@ -1027,36 +1033,232 @@ async function initMap(inputJSON) {
 				attribution: '&copy; EMODnet ' + emodnet_title,
 				maxZoom: 20,
 				pane: 'backgroundPane'
-			})
+			}),
+			legendUrl: `${emodnet_wms}?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image/png&layer=${emodnet_layer}` 
 		};
 	}
 	
 	// List of EMODnet WMS to be included in the map
 	const bathWMS = 'https://ows.emodnet-bathymetry.eu/wms';
 	//const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
+	const geogWMS = 'https://drive.emodnet-geology.eu/geoserver/tno/wms';
+	const humaWMS = 'https://ows.emodnet-humanactivities.eu/geoserver/emodnet/ows'; //'https://ows.emodnet-humanactivities.eu/wms';
+	
+	// Add Coastal migration layers
+	const coastalMigration = L.layerGroup(
+	[
+		getEmodNet(geogWMS, 'coastal_migration_fd_02_450k_650k', 'coastal_migration_fd_02_450k_650k').layer,
+		getEmodNet(geogWMS, 'coastal_migration_fd_01_250k_350k', 'coastal_migration_fd_01_250k_350k').layer,
+		getEmodNet(geogWMS, 'coastal_migration_fd_0025_80k_150k', 'coastal_migration_fd_0025_80k_150k').layer,
+		getEmodNet(geogWMS, 'coastal_migration_fd_000_0_80k', 'coastal_migration_fd_000_0_80k').layer
+	]);	
 	
 	// Initialize the layers to be added to the map
 	const emodnetLayers = [
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
-		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Low Tide'),
-		getEmodNet(bathWMS, 'coastlines', 'coastline_msl', 'Coastline - Sea Level'),
-		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - High Tide'),
-		getEmodNet(bathWMS, 'emodnet:slope', null, 'Bathymetry - Seafloor Slope')//,
-		//getEmodNet(habWMS, 'annexiMaps_all', null, 'Habitats - ...')
+		getEmodNet(bathWMS, 'emodnet:contours', null, 'Bathymetry - Contours'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Lowest Astronomical Tide'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_msl', 'Coastline - Mean Sea Level'),
+		getEmodNet(bathWMS, 'coastlines', 'coastline_mhw', 'Coastline - Mean High Water'),
+		{
+			title: "Coastal Migration - Field Data",
+			layer: coastalMigration,
+			legendUrl: `${geogWMS}?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image/png&layer=coastal_migration_fd_0025_80k_150k`
+		},
+		getEmodNet(humaWMS, 'dischargepoints', 'dischargepoints', 'Waste Disposal - Discharge Points'),
+		getEmodNet(humaWMS, 'dredging', 'dredging', 'Dredging'),
+		getEmodNet(humaWMS, 'vesseldensity_allavg', 'VesselDensity', 'Vessel Density - All Types')
 	];
-	
-	// Initialize overlays in the leaflet format
-	mapOverlays = {
-		"Esri Services": {'Labels (ESRI)': esriLabels},
-		"EMODnet Services" : {}
-	};
 		
 	emodnetLayers.forEach(lay => {
 		mapOverlays["EMODnet Services"][lay.title] = lay.layer;
 	});
-		
+			
 	// Add control
 	updateLayerControl();
+	
+	// Add legend Control
+	const legendControl = L.control({position: 'topright'});
+	legendControl.onAdd = function () {
+		this._div = L.DomUtil.create('div','map-legend');
+		this._div.innerHTML = '<em>No active legend>/em>';
+		this._div.style.display = 'none';
+		return this._div;
+	};
+	legendControl.addTo(map);
+	
+	// Update legend Control
+	legendsOn = {};
+	function legendUpdate() {
+		if (Object.keys(legendsOn).length === 0) {
+			legendControl._div.innerHTML = '<em>No active legend</em>';
+			legendControl._div.style.display = 'none';
+			return;
+		}
+		
+		legendControl._div.style.display = 'block';
+		legendControl._div.innerHTML = Object.keys(legendsOn)
+			.map(k => legendsOn[k])
+			.join('<hr>');
+	}
+		
+	// Add legend to the active legends
+	map.on('overlayadd', function (e) {
+		const lay = Object.values(emodnetLayers)
+			.find(l => l.layer === e.layer);
+
+		if (!lay || !lay.legendUrl) return;
+		
+		legendsOn[lay.title] = `
+								<div class="legend-block">
+									<strong>${lay.title}</strong><br>
+									<img src="${lay.legendUrl}" alt="Legend">
+								</div>
+								`;
+		legendUpdate();
+	});
+	
+	// Remove legend
+	map.on('overlayremove', function (e) {
+		const layerRemoved = Object.values(emodnetLayers)
+			.find(l => l.layer === e.layer);
+		
+		if (!layerRemoved) return;
+		
+		delete legendsOn[layerRemoved.title];
+		legendUpdate();
+		
+	});
+	
+	///////////////////////////////ADDITIONAL DATA LAYER FOR POINT SOURCES/////////////////////////////
+	// EMODnet layers for human activities - Waste Disposal (Discharge Points) & Dredging
+	// Initializing the data layers
+	let dredLayer, dispLayer; 
+	// Links to the data WFS
+	const dredWFS = 'https://ows.emodnet-humanactivities.eu/wfs?SERVICE=WFS&VERSION=1.1.0&request=GetFeature&typeName=dredging&OUTPUTFORMAT=json';
+	const dispWFS = 'https://ows.emodnet-humanactivities.eu/wfs?SERVICE=WFS&VERSION=1.1.0&request=GetFeature&typeName=dischargepoints&OUTPUTFORMAT=json';
+		
+	// Function to extract the most recent entrty in json data file
+	function getLatestData(featureCollection) {
+		const latestEntry = {};
+		
+		featureCollection.features.forEach(f => {
+			const props = f.properties;
+			
+			const name = props?.extraction_area ?? props?.dcpname;
+			if (!name) return;
+			
+			const year = Number(props?.year_ ?? props?.year);
+			if (!year) return;
+			
+			if (!latestEntry[name] || year > Number((latestEntry[name].properties?.year_ ?? latestEntry[name].properties?.year))) {
+				latestEntry[name] = f;
+			}
+		});
+		
+		return Object.values(latestEntry);
+	}
+		
+	// Function to check if popup entry exists
+	function propertyCheck(label, value, unit='') {
+		if (!value || value === "") return '';
+		return `<div><strong>${label}:</strong> ${value}${unit}</div>`;
+	}
+	
+	// Function for standardizing popup Display
+	function popupLatestData(nameLayer, attributesData) {
+		
+		let htmlData = "";
+		if (nameLayer === "Dredging") {
+			htmlData = `
+					<div style="font-size:1.1em;font-weight:600;text-decoration:underline;margin-bottom:4px;">${nameLayer}</div>
+					${propertyCheck("Extraction Area", attributesData.extraction_area)}
+					${propertyCheck("Year", attributesData.year_)}
+					${propertyCheck('Permitted amount', attributesData.permitted_amount_m3, ' m&sup3')}
+					${propertyCheck('Permitted amount', attributesData.permitted_amount_t, ' t')}
+					${propertyCheck('Extracted amount', attributesData.extracted_amount_m3, ' m&sup3')}
+					${propertyCheck('Extracted amount', attributesData.extracted_amount_t, ' t')}
+					${propertyCheck("Extraction Type", attributesData.extraction_type)}
+					${propertyCheck("Purpose", attributesData.purpose)}
+					${propertyCheck("End Use", attributesData.end_use)}
+					<a href="${attributesData.link_to_web_sources}" target="_blank">Link to Web Sources</a>
+					`;
+		} else if (nameLayer === "Waste Disposal - Discharge Points") {
+			htmlData =`
+					<div style="font-size:1.1em;font-weight:600;text-decoration:underline;margin-bottom:4px;">${nameLayer}</div>
+					${propertyCheck("Name", attributesData.dcpname)}
+					${propertyCheck("Year", attributesData.year)}
+					${propertyCheck("Status", attributesData.dcpstate)}
+					${propertyCheck("Water Body Type", attributesData.dcpwbtype)}
+					${propertyCheck("Receiving Area", attributesData.dcptyperca)}
+					`;
+		}
+		
+		return htmlData;
+	}
+	
+	// Function to load WFS as data point with info popup 
+	function loadDataPoints(dataWFS, dataLayer, dataRadius = 12) {
+				
+		return fetch(dataWFS)
+			.then(res => res.json())
+			.then(data => {
+				const dataLatest = getLatestData(data);
+				const geoLayer = L.geoJSON(dataLatest, {
+					pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+						radius: dataRadius,
+						color: 'transparent',
+						fillColor: 'transparent', 
+						opacity: 0,
+						fillOpacity: 0
+					}),
+					onEachFeature: (feature, layer) => {
+						const props = feature.properties;
+						const popupContent = popupLatestData(dataLayer, props);
+						layer.bindPopup(popupContent);
+						layer.on('mouseover', function() {
+							this.openPopup();
+						});
+						layer.on('mouseout', function() {
+							setTimeout(() => {
+								if (!this.getPopup()._container.matches(":hover")) {
+									this.closePopup();
+								}
+							}, 200);
+						});
+					}
+					
+				}).addTo(map);
+				return geoLayer;
+			});
+	}		
+	
+	// Function to control the visibility of data Points
+	async function updateDataPoints() {
+		if (map.getZoom() > 6 && map.hasLayer(mapOverlays["EMODnet Services"]["Dredging"])) {
+			if (!dredLayer) dredLayer = await loadDataPoints(dredWFS, "Dredging");
+		} else {
+			if (dredLayer && map.hasLayer(dredLayer)) {
+				map.removeLayer(dredLayer);
+				dredLayer = null;
+			}
+		}
+		
+		if (map.getZoom() > 6 && map.hasLayer(mapOverlays["EMODnet Services"]["Waste Disposal - Discharge Points"])) {
+			if (!dispLayer) dispLayer = await loadDataPoints(dispWFS, "Waste Disposal - Discharge Points");
+		} else {
+			if (dispLayer && map.hasLayer(dispLayer)) {
+				map.removeLayer(dispLayer);
+				dispLayer = null;
+			}
+		}
+	}
+	
+	// Update visibility of data points on zoom change
+	map.on('zoomend', updateDataPoints);
+	map.on('overlayadd overlayremove', updateDataPoints);
+	
+	////////////////////////////END OF ADDITIONAL DATA LAYER//////////////////////////////////////
 	
 	// Add scale bar
 	L.control.scale({
