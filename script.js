@@ -1017,10 +1017,12 @@ async function initMap(inputJSON) {
 	// Initialize overlays in the leaflet format
 	mapOverlays = {
 		"Esri Services": {'Labels (ESRI)': esriLabels},
-		"EMODnet Services" : {}
+		"EMODnet Services" : {},
+		"Copernicus Services" : {}
 	};
 
-	// EMODnet layers
+	
+	///////////////////////////////////////Section Controlling EMODnet Services//////////////////////
 	// Get layer through function by connecting to any wms tile server
 	function getEmodNet(emodnet_wms, emodnet_layer, emodnet_style, emodnet_title) {
 		return {
@@ -1038,6 +1040,8 @@ async function initMap(inputJSON) {
 		};
 	}
 	
+	// Dummy control for toggling EMODnet services
+	const emodnetToggle = L.layerGroup();
 	// List of EMODnet WMS to be included in the map
 	const bathWMS = 'https://ows.emodnet-bathymetry.eu/wms';
 	//const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
@@ -1055,6 +1059,11 @@ async function initMap(inputJSON) {
 	
 	// Initialize the layers to be added to the map
 	const emodnetLayers = [
+		{
+			title: "Activate EMODnet Layers",
+			layer: emodnetToggle,
+			legendUrl: ""
+		},
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
 		getEmodNet(bathWMS, 'emodnet:contours', null, 'Bathymetry - Contours'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Lowest Astronomical Tide'),
@@ -1069,14 +1078,33 @@ async function initMap(inputJSON) {
 		getEmodNet(humaWMS, 'dredging', 'dredging', 'Dredging'),
 		getEmodNet(humaWMS, 'vesseldensity_allavg', 'VesselDensity', 'Vessel Density - All Types')
 	];
-		
-	emodnetLayers.forEach(lay => {
-		mapOverlays["EMODnet Services"][lay.title] = lay.layer;
-	});
-			
-	// Add control
-	updateLayerControl();
+	toggleEMODnetLayers(false);
 	
+	// Function to activate/deactivate layers
+	function toggleEMODnetLayers (EMODnetState) {
+		
+		if (EMODnetState) {
+		
+			emodnetLayers.forEach(lay => {
+				
+				mapOverlays["EMODnet Services"][lay.title] = lay.layer;
+			});
+			
+		} else {
+			
+			emodnetLayers.forEach(lay => {
+				if (lay.layer && map.hasLayer(lay.layer)) {
+					map.removeLayer(lay.layer);
+				}
+			});
+			mapOverlays["EMODnet Services"] = {};
+			mapOverlays["EMODnet Services"][emodnetLayers[0].title] = emodnetLayers[0].layer;
+			
+		}
+		// Add control
+		updateLayerControl();
+	}
+		
 	// Add legend Control
 	const legendControl = L.control({position: 'topright'});
 	legendControl.onAdd = function () {
@@ -1104,30 +1132,53 @@ async function initMap(inputJSON) {
 		
 	// Add legend to the active legends
 	map.on('overlayadd', function (e) {
-		const lay = Object.values(emodnetLayers)
-			.find(l => l.layer === e.layer);
-
-		if (!lay || !lay.legendUrl) return;
 		
-		legendsOn[lay.title] = `
-								<div class="legend-block">
-									<strong>${lay.title}</strong><br>
-									<img src="${lay.legendUrl}" alt="Legend">
-								</div>
-								`;
-		legendUpdate();
+		if (e.layer === emodnetToggle) {
+			setTimeout( () => {
+				toggleEMODnetLayers(true);
+			}, 0);
+		} else if (e.layer === coperToggle) {
+			setTimeout( () => {
+				toggleCopernicusLayers(true);
+			}, 0);
+		} else {
+			
+			const lay = Object.values(emodnetLayers)
+				.find(l => l.layer === e.layer);
+
+			if (!lay || !lay.legendUrl) return;
+			
+			legendsOn[lay.title] = `
+									<div class="legend-block">
+										<strong>${lay.title}</strong><br>
+										<img src="${lay.legendUrl}" alt="Legend">
+									</div>
+									`;
+			legendUpdate();
+		}
 	});
 	
 	// Remove legend
 	map.on('overlayremove', function (e) {
-		const layerRemoved = Object.values(emodnetLayers)
-			.find(l => l.layer === e.layer);
 		
-		if (!layerRemoved) return;
-		
-		delete legendsOn[layerRemoved.title];
-		legendUpdate();
-		
+		if (e.layer === emodnetToggle) {
+			setTimeout( () => {
+				toggleEMODnetLayers(false);
+			}, 0);
+		} else if (e.layer === coperToggle) {
+			setTimeout( () => {
+				toggleCopernicusLayers(false);
+			}, 0);
+		} else {
+
+			const layerRemoved = Object.values(emodnetLayers)
+				.find(l => l.layer === e.layer);
+			
+			if (!layerRemoved) return;
+			
+			delete legendsOn[layerRemoved.title];
+			legendUpdate();
+		}
 	});
 	
 	///////////////////////////////ADDITIONAL DATA LAYER FOR POINT SOURCES/////////////////////////////
@@ -1235,7 +1286,9 @@ async function initMap(inputJSON) {
 	
 	// Function to control the visibility of data Points
 	async function updateDataPoints() {
-		if (map.getZoom() > 6 && map.hasLayer(mapOverlays["EMODnet Services"]["Dredging"])) {
+		
+		const dredOverlay = mapOverlays["EMODnet Services"]?.["Dredging"];
+		if (map.getZoom() > 6 && dredOverlay && map.hasLayer(dredOverlay)) {
 			if (!dredLayer) dredLayer = await loadDataPoints(dredWFS, "Dredging");
 		} else {
 			if (dredLayer && map.hasLayer(dredLayer)) {
@@ -1244,7 +1297,8 @@ async function initMap(inputJSON) {
 			}
 		}
 		
-		if (map.getZoom() > 6 && map.hasLayer(mapOverlays["EMODnet Services"]["Waste Disposal - Discharge Points"])) {
+		const dispOverlay = mapOverlays["EMODnet Services"]?.["Waste Disposal - Discharge Points"];
+		if (map.getZoom() > 6 && dispOverlay && map.hasLayer(dispOverlay)) {
 			if (!dispLayer) dispLayer = await loadDataPoints(dispWFS, "Waste Disposal - Discharge Points");
 		} else {
 			if (dispLayer && map.hasLayer(dispLayer)) {
@@ -1259,7 +1313,60 @@ async function initMap(inputJSON) {
 	map.on('overlayadd overlayremove', updateDataPoints);
 	
 	////////////////////////////END OF ADDITIONAL DATA LAYER//////////////////////////////////////
+	////////////////////////////END OF EMODNET SERVICES///////////////////////////////////////////
 	
+	////////////////////////////Section for Copernicus Services//////////////////////////////////
+	
+	
+	const clc2018WMS = 'https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2018_WM/MapServertile/{z}/{y}/{x}';
+	
+	const clc2018 = L.tileLayer(clc2018WMS, 
+		{
+			attribution: '&copy;Copernicus Land Monitoring Service by EEA',
+			maxzoom: 14    
+		}
+	);
+	
+	const coperToggle = L.layerGroup();
+	
+	const copernicusLayers = [
+		{
+			title: "Activate Copernicus Layers",
+			layer: coperToggle,
+			legendUrl: ""
+		},
+		{
+			title: "CORINE Land Cover (2018)",
+			layer: clc2018,
+			legendUrl: ""
+		}
+	];	
+	toggleCopernicusLayers(false);
+	
+	// Function to activate/deactivate layers
+	function toggleCopernicusLayers (coperState) {
+		
+		if (coperState) {
+		
+			copernicusLayers.forEach(lay => {
+				mapOverlays["Copernicus Services"][lay.title] = lay.layer;
+			});
+			
+		} else {
+			
+			copernicusLayers.forEach(lay => {
+				if (lay.layer && map.hasLayer(lay.layer)) {
+					map.removeLayer(lay.layer);
+				}
+			});
+			mapOverlays["Copernicus Services"] = {};
+			mapOverlays["Copernicus Services"][copernicusLayers[0].title] = copernicusLayers[0].layer;
+			
+		}
+		// Add control
+		updateLayerControl();
+	}
+		
 	// Add scale bar
 	L.control.scale({
 		position: 'bottomleft',
