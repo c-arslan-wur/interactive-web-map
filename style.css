@@ -179,24 +179,52 @@ h2 {
 .modal-content select:focus {
 	outline: none;
 	background-color: #ecedea;
-
 }
 
 .map-legend {
   background: rgba(255,255,255,0.5);
   backdrop-filter: blur(2px);
-  padding: 8px;
-  border-radius: 4px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.3);
-  max-width: 125px;
-  max-height: none;
-  width:auto;
-  height:auto;
-}
-.map-legend img {
-  width: 100%;
+  padding: 4px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
 }
 
 .legend-block {
-  margin-bottom: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 4px;
 }
+
+.legend-title {
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.legend-image {
+  max-height: calc(100vh-200px);          
+  max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.legend-image img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  image-rendering: crisp-edges;
+}
+

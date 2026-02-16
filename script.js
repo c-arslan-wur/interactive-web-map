@@ -992,9 +992,9 @@ async function initMap(inputJSON) {
 	});
 
 	baseLayers = {
-		"ESRI Satellite": esriSat,
-		"OpenStreetMap": osm,
-		"OSM Topographic": osm_topo
+			"ESRI Satellite": esriSat,
+			"OpenStreetMap": osm,
+			"OSM Topographic": osm_topo
 	};
 
 	// Initialize map
@@ -1034,7 +1034,8 @@ async function initMap(inputJSON) {
 				transparent: true,
 				attribution: '&copy; EMODnet ' + emodnet_title,
 				maxZoom: 20,
-				pane: 'backgroundPane'
+				pane: 'backgroundPane',
+				opacity: 0.75
 			}),
 			legendUrl: `${emodnet_wms}?service=WMS&version=1.3.0&request=GetLegendGraphic&format=image/png&layer=${emodnet_layer}` 
 		};
@@ -1129,7 +1130,7 @@ async function initMap(inputJSON) {
 			.map(k => legendsOn[k])
 			.join('<hr>');
 	}
-		
+	
 	// Add legend to the active legends
 	map.on('overlayadd', function (e) {
 		
@@ -1137,48 +1138,72 @@ async function initMap(inputJSON) {
 			setTimeout( () => {
 				toggleEMODnetLayers(true);
 			}, 0);
-		} else if (e.layer === coperToggle) {
+			return;
+		} 
+		if (e.layer === coperToggle) {
 			setTimeout( () => {
 				toggleCopernicusLayers(true);
 			}, 0);
-		} else {
-			
-			const lay = Object.values(emodnetLayers)
-				.find(l => l.layer === e.layer);
-
-			if (!lay || !lay.legendUrl) return;
-			
-			legendsOn[lay.title] = `
-									<div class="legend-block">
-										<strong>${lay.title}</strong><br>
-										<img src="${lay.legendUrl}" alt="Legend">
-									</div>
-									`;
-			legendUpdate();
+			return;
+		} 
+		if (e.layer === corineToggle) {
+			setTimeout( () => {
+				toggleCorineLayers(true);
+			}, 0);
+			return;
+		} 
+		if (corineLayers.some(lay => lay.layer ===e.layer)) {
+			setTimeout( () => {
+				buttonCorineLayer(e.layer);
+			}, 0);
 		}
+	
+		const lay = [...emodnetLayers, ...copernicusLayers, ...corineLayers]
+			.find(l => l.layer === e.layer);
+		
+		if (!lay?.legendUrl) return;			
+		
+		legendsOn[lay.title] = `
+								<div class="legend-block">
+									<div class="legend-title">${lay.title}</div>
+									<div class="legend-image"><img src="${lay.legendUrl}" alt="Legend for ${lay.title}"></div>
+								</div>
+								`;
+		
+		legendUpdate();
+			
 	});
 	
 	// Remove legend
 	map.on('overlayremove', function (e) {
-		
+				
 		if (e.layer === emodnetToggle) {
 			setTimeout( () => {
 				toggleEMODnetLayers(false);
 			}, 0);
-		} else if (e.layer === coperToggle) {
+			return;
+		} 
+		if (e.layer === coperToggle) {
 			setTimeout( () => {
 				toggleCopernicusLayers(false);
 			}, 0);
-		} else {
-
-			const layerRemoved = Object.values(emodnetLayers)
-				.find(l => l.layer === e.layer);
-			
-			if (!layerRemoved) return;
-			
-			delete legendsOn[layerRemoved.title];
-			legendUpdate();
+			return;
+		} 
+		if (e.layer === corineToggle) {
+			setTimeout( () => {
+				toggleCorineLayers(false);
+			}, 0);
+			return;
 		}
+		
+		const lay = [...emodnetLayers, ...copernicusLayers, ...corineLayers]
+			.find(l => l.layer === e.layer);
+		
+		if (!lay) return;
+		
+		delete legendsOn[lay.title]; 
+		legendUpdate();
+
 	});
 	
 	///////////////////////////////ADDITIONAL DATA LAYER FOR POINT SOURCES/////////////////////////////
@@ -1315,20 +1340,81 @@ async function initMap(inputJSON) {
 	////////////////////////////END OF ADDITIONAL DATA LAYER//////////////////////////////////////
 	////////////////////////////END OF EMODNET SERVICES///////////////////////////////////////////
 	
+	/////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////Section for Copernicus Services//////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////////////////////////
+	// Corine Land Cover
+	const clcLegend = 'https://image.discomap.eea.europa.eu/arcgis/services/Corine/CLC2018_WM/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=12';
 	
+	function getCLCserver(year) {
+		return `https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC${year}_WM/MapServer`;
+	}
 	
-	const clc2018WMS = 'https://image.discomap.eea.europa.eu/arcgis/rest/services/Corine/CLC2018_WM/MapServertile/{z}/{y}/{x}';
+	function getCopernicus(dataWMS, dataLayer, dataTitle, legendUrl, pane='backgroundPane', opacity=0.75) {
+		
+		return {
+			title: dataTitle,
+			layer: L.esri.dynamicMapLayer( 
+				{
+					url: dataWMS,
+					layers: [dataLayer] || null,
+					opacity,
+					pane
+				}
+			),
+			legendUrl
+		};
+	}
+	const corineToggle = L.layerGroup();
 	
-	const clc2018 = L.tileLayer(clc2018WMS, 
-		{
-			attribution: '&copy;Copernicus Land Monitoring Service by EEA',
-			maxzoom: 14    
+	const clcYear = [1990, 2000, 2006, 2012, 2018];
+	const corineLayers = [];
+	clcYear.forEach(year => {
+		corineLayers.push(getCopernicus(getCLCserver(year),1,`CLC (${year})`,clcLegend));
+	});	
+	
+	// Function to activate/deactivate layers
+	function toggleCorineLayers (corineState) {
+		
+		if (corineState) {
+		
+			corineLayers.forEach(lay => {
+				mapOverlays["Copernicus Services"][lay.title] = lay.layer;
+			});
+			
+		} else {
+			
+			corineLayers.forEach(lay => {
+				if (lay.layer && map.hasLayer(lay.layer)) {
+					map.removeLayer(lay.layer);
+				}
+				if (mapOverlays["Copernicus Services"] && Object.hasOwn(mapOverlays["Copernicus Services"], lay.title)) delete mapOverlays["Copernicus Services"][lay.title];
+			});
+				
 		}
-	);
+		// Add control
+		updateLayerControl();
+		
+	}
 	
+	// Function to control one corine layer per time
+	function buttonCorineLayer(selectedCorine) {
+			
+			const extractCorine = corineLayers.filter(lay => lay.layer !== selectedCorine);
+			extractCorine.forEach(lay => {
+				if (map.hasLayer(lay.layer)) map.removeLayer(lay.layer);
+			});
+			
+			if (!map.hasLayer(selectedCorine)) selectedCorine.addTo(map);
+	
+	}
+	
+	// Water and Wetness Status for 2018
+	const wwsServer = 'https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_WaterWetness_2018/ImageServer/WMSServer';
+	const wwsLegend = 'https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_WaterWetness_2018/ImageServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=HRL_WaterWetness_2018:WAW_MosaicSymbology';
+	
+	// Copernicus Services Control
 	const coperToggle = L.layerGroup();
-	
 	const copernicusLayers = [
 		{
 			title: "Activate Copernicus Layers",
@@ -1336,12 +1422,28 @@ async function initMap(inputJSON) {
 			legendUrl: ""
 		},
 		{
-			title: "CORINE Land Cover (2018)",
-			layer: clc2018,
+			title: "Water and Wetness Status 2018",
+			layer: L.tileLayer.wms(
+				wwsServer,
+				{
+					layers: "HRL_WaterWetness_2018:WAW_MosaicSymbology",
+					styles: "default",
+					format: "image/png",
+					transparent: true,
+					version: "1.3.0",
+					attribution: 'by European Environmental Agency (EEA)',
+					maxZoom: 20,
+					opacity: 0.75,
+					pane: 'backgroundPane'
+				}),
+			legendUrl: wwsLegend
+		},
+		{
+			title: "Activate CORINE Time Series",
+			layer: corineToggle,
 			legendUrl: ""
 		}
 	];	
-	toggleCopernicusLayers(false);
 	
 	// Function to activate/deactivate layers
 	function toggleCopernicusLayers (coperState) {
@@ -1359,6 +1461,8 @@ async function initMap(inputJSON) {
 					map.removeLayer(lay.layer);
 				}
 			});
+			//toggleCorineLayers(false);
+			
 			mapOverlays["Copernicus Services"] = {};
 			mapOverlays["Copernicus Services"][copernicusLayers[0].title] = copernicusLayers[0].layer;
 			
@@ -1366,7 +1470,15 @@ async function initMap(inputJSON) {
 		// Add control
 		updateLayerControl();
 	}
-		
+	
+	// Initialize the placeholders for informative layers
+	toggleCopernicusLayers(false);
+	//toggleCorineLayers(false);
+	
+	///////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////End of Copernicus Services/////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////
+	
 	// Add scale bar
 	L.control.scale({
 		position: 'bottomleft',
@@ -2339,17 +2451,18 @@ function checkIntersection(atPilot) {
 
 // Function to update layer control
 function updateLayerControl() {
+	
 	if (layerControl) {
 		map.removeControl(layerControl);
 	}
-	
+
 	layerControl = L.control.groupedLayers(
 		baseLayers,
 		mapOverlays,
 		{ position: 'topleft' }
 	).addTo(map);
-}
 
+}
 // Function that loads biotope layers per pilot if exists (Baseline Ecological Assessment)
 async function loadBiotopes() {
 	// Work on the polygon that is activated in the main routine		
