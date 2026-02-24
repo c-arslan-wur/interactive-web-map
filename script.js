@@ -1045,10 +1045,13 @@ async function initMap(inputJSON) {
 	const emodnetToggle = L.layerGroup();
 	// List of EMODnet WMS to be included in the map
 	const bathWMS = 'https://ows.emodnet-bathymetry.eu/wms';
-	//const habWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
 	const geogWMS = 'https://drive.emodnet-geology.eu/geoserver/tno/wms';
 	const humaWMS = 'https://ows.emodnet-humanactivities.eu/geoserver/emodnet/ows'; //'https://ows.emodnet-humanactivities.eu/wms';
+	const habsWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
 	
+	const na2kServer = 'https://bio.discomap.eea.europa.eu/arcgis/rest/services/ProtectedSites/Natura2000Sites/MapServer';
+	const na2kLegend = 'https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=0';
+		
 	// Add Coastal migration layers
 	const coastalMigration = L.layerGroup(
 	[
@@ -1065,6 +1068,17 @@ async function initMap(inputJSON) {
 			layer: emodnetToggle,
 			legendUrl: ""
 		},
+		{
+			title: 'NATURA 2000 Network',
+			layer: L.esri.dynamicMapLayer({
+					url: na2kServer,
+					layers: [2],   
+					opacity: 0.75,
+					minZoom: 10,
+					pane: 'backgroundPane'
+				}),
+			legendUrl: na2kLegend
+		},
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
 		getEmodNet(bathWMS, 'emodnet:contours', null, 'Bathymetry - Contours'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Lowest Astronomical Tide'),
@@ -1077,7 +1091,9 @@ async function initMap(inputJSON) {
 		},
 		getEmodNet(humaWMS, 'dischargepoints', 'dischargepoints', 'Waste Disposal - Discharge Points'),
 		getEmodNet(humaWMS, 'dredging', 'dredging', 'Dredging'),
-		getEmodNet(humaWMS, 'vesseldensity_allavg', 'VesselDensity', 'Vessel Density - All Types')
+		getEmodNet(humaWMS, 'vesseldensity_allavg', 'VesselDensity', 'Vessel Density - All Types'),
+		getEmodNet(habsWMS, 'eov_seagrass_group', null, 'Seagrass Cover in Europe (2025)'),
+		getEmodNet(habsWMS, 'coastal_wetlands_2025', null, 'Coastal Wetlands in European Waters (2025)')
 	];
 	toggleEMODnetLayers(false);
 	
