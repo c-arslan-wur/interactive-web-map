@@ -1,0 +1,30 @@
+{
+  "group": "Biotopes",
+  "layers": [
+	{
+      "name": "MB54: Black Sea infralittoral sand",
+      "file": "MB54_Black_Sea_infralittoral_sand.geojson",
+      "color": "#386CB0"
+    },
+    {
+      "name": "MB34: Black Sea infralittoral coarse sediments",
+      "file": "MB34_Black_Sea_infralittoral_coarse_sediment.geojson",
+      "color": "#FF7F00"
+    },
+    {
+      "name": "MB44: Black Sea infralittoral mixed sediments",
+      "file": "MB44_Black_Sea_infralittoral_mixed_sediment.geojson",
+      "color": "#B3DE69"
+    },
+    {
+      "name": "MB14: Black Sea infralittoral rock",
+      "file": "MB14_Black_Sea_infralittoral_rock.geojson",
+      "color": "#A6761D"
+    },
+    {
+      "name": "MB64: Black Sea infralittoral mud",
+      "file": "MB64_Black_Sea_infralittoral_mud.geojson",
+      "color": "#FDB462"
+    }
+  ]
+}
