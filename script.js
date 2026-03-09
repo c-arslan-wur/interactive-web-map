@@ -1048,9 +1048,6 @@ async function initMap(inputJSON) {
 	const geogWMS = 'https://drive.emodnet-geology.eu/geoserver/tno/wms';
 	const humaWMS = 'https://ows.emodnet-humanactivities.eu/geoserver/emodnet/ows'; //'https://ows.emodnet-humanactivities.eu/wms';
 	const habsWMS = 'https://ows.emodnet-seabedhabitats.eu/geoserver/emodnet_view/wms';
-	
-	const na2kServer = 'https://bio.discomap.eea.europa.eu/arcgis/rest/services/ProtectedSites/Natura2000Sites/MapServer';
-	const na2kLegend = 'https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=0';
 		
 	// Add Coastal migration layers
 	const coastalMigration = L.layerGroup(
@@ -1068,17 +1065,7 @@ async function initMap(inputJSON) {
 			layer: emodnetToggle,
 			legendUrl: ""
 		},
-		{
-			title: 'NATURA 2000 Network',
-			layer: L.esri.dynamicMapLayer({
-					url: na2kServer,
-					layers: [2],   
-					opacity: 0.75,
-					minZoom: 10,
-					pane: 'backgroundPane'
-				}),
-			legendUrl: na2kLegend
-		},
+		getEmodNet(humaWMS, 'natura2000areas', null, 'NATURA 2000 Sites'),
 		getEmodNet(bathWMS, 'emodnet:mean_multicolour', null, 'Bathymetry - Mean Depth'),
 		getEmodNet(bathWMS, 'emodnet:contours', null, 'Bathymetry - Contours'),
 		getEmodNet(bathWMS, 'coastlines', 'coastline_lat', 'Coastline - Lowest Astronomical Tide'),
@@ -1375,7 +1362,10 @@ async function initMap(inputJSON) {
 					url: dataWMS,
 					layers: [dataLayer] || null,
 					opacity,
-					pane
+					pane,
+					minZoom:0,
+					maxZoom: 20,
+					disableClientCaching: true
 				}
 			),
 			legendUrl
@@ -1425,6 +1415,10 @@ async function initMap(inputJSON) {
 	
 	}
 	
+	// NATURA 2000 Areas 
+	const na2kServer = 'https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer';
+	const na2kLegend = 'https://bio.discomap.eea.europa.eu/arcgis/services/ProtectedSites/Natura2000Sites/MapServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=2';
+	
 	// Water and Wetness Status for 2018
 	const wwsServer = 'https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_WaterWetness_2018/ImageServer/WMSServer';
 	const wwsLegend = 'https://image.discomap.eea.europa.eu/arcgis/services/GioLandPublic/HRL_WaterWetness_2018/ImageServer/WMSServer?request=GetLegendGraphic%26version=1.3.0%26format=image/png%26layer=HRL_WaterWetness_2018:WAW_MosaicSymbology';
@@ -1438,6 +1432,20 @@ async function initMap(inputJSON) {
 			legendUrl: ""
 		},
 		{
+			title: 'NATURA 2000 Network',
+			layer: L.tileLayer.wms(na2kServer, {
+					layers: '2',
+					format: 'image/png',
+					transparent: true,
+					version: '1.3.0',
+					attribution: '&copy; EEA',
+					maxZoom: 20,
+					opacity: 0.75,
+					pane: 'backgroundPane'
+				}),
+			legendUrl: na2kLegend
+		},
+		{
 			title: "Water and Wetness Status 2018",
 			layer: L.tileLayer.wms(
 				wwsServer,
@@ -1447,7 +1455,7 @@ async function initMap(inputJSON) {
 					format: "image/png",
 					transparent: true,
 					version: "1.3.0",
-					attribution: 'by European Environmental Agency (EEA)',
+					attribution: '&copy; EEA',
 					maxZoom: 20,
 					opacity: 0.75,
 					pane: 'backgroundPane'
