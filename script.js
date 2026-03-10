@@ -1479,7 +1479,8 @@ async function initMap(inputJSON) {
 			});
 			
 		} else {
-			
+
+			toggleCorineLayers(coperState);
 			copernicusLayers.forEach(lay => {
 				if (lay.layer && map.hasLayer(lay.layer)) {
 					map.removeLayer(lay.layer);
@@ -2638,6 +2639,7 @@ async function openReadme() {
 	`);
 	ReadmeTab.document.close();
 }
+
 
 
 
