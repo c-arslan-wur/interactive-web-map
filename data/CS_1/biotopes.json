@@ -9,22 +9,23 @@
     {
       "name": "MB34: Black Sea infralittoral coarse sediments",
       "file": "MB34_Black_Sea_infralittoral_coarse_sediment.geojson",
-      "color": "#C49A3C"
+      "color": "#A0785A"
     },
     {
       "name": "MB44: Black Sea infralittoral mixed sediments",
       "file": "MB44_Black_Sea_infralittoral_mixed_sediment.geojson",
-      "color": "#A0785A"
+      "color": "#8B3A0F"
     },
     {
       "name": "MB14: Black Sea infralittoral rock",
       "file": "MB14_Black_Sea_infralittoral_rock.geojson",
-      "color": "#7D7D7D"
+      "color": "#4C4C4C"
     },
     {
       "name": "MB64: Black Sea infralittoral mud",
       "file": "MB64_Black_Sea_infralittoral_mud.geojson",
-      "color": "#6B4F3A"
+      "color": "#3B1A06"
     }
   ]
+
 }
