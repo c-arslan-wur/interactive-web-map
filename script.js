@@ -1360,7 +1360,7 @@ async function initMap(inputJSON) {
 			layer: L.esri.dynamicMapLayer( 
 				{
 					url: dataWMS,
-					layers: [dataLayer] || null,
+					layers: dataLayer || null,
 					opacity,
 					pane,
 					minZoom:0,
@@ -1376,7 +1376,7 @@ async function initMap(inputJSON) {
 	const clcYear = [1990, 2000, 2006, 2012, 2018];
 	const corineLayers = [];
 	clcYear.forEach(year => {
-		corineLayers.push(getCopernicus(getCLCserver(year),1,`CLC (${year})`,clcLegend));
+		corineLayers.push(getCopernicus(getCLCserver(year), [0, 1],`CLC (${year})`,clcLegend));
 	});	
 	
 	// Function to activate/deactivate layers
@@ -2639,6 +2639,7 @@ async function openReadme() {
 	`);
 	ReadmeTab.document.close();
 }
+
 
 
 
