@@ -5,8 +5,8 @@ let rightClickMenu = false;
 let mapMode = ""; //"rest-coast", "waterlands", "directory", or "new-map"
 
 // Setting the map view
-let originalZoom = 4;
-let originalCenter = {lat: 43.0000, lng: 10.0000};
+let originalZoom = 5;
+let originalCenter = {lat: 45.0000, lng: 12.0000};
 // Initializing array for coastal units 
 let polygons = [];
 // Initializing global variables
