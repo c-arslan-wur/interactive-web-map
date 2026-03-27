@@ -11,21 +11,19 @@ For detailed information about the NB3 Framework, please refer to:
 
 3. Scientific article on the participative application of the framework: C. Arslan, J. Warner & J.M. van Loon-Steensma (2026), Participative application of the nature-based building blocks (NB3) framework to support upscaling coastal NbS, Ocean & Coastal Management, 272, 107988. https://doi.org/10.1016/j.ocecoaman.2025.107988
 
-Data and knowledge from the participative application of the framework in the REST-COAST project is being published as a collective data paper format as an examplary of the inventory on NbS-driven building blocks in the Ebro Delta, Foros Bay, Venice Lagoon, and Vistula Lagoon pilots:
+Data and knowledge from the participative application of the framework in the REST-COAST project is being published as a collective data paper format as an examplary of the inventory on NbS-driven building blocks in the Venice Lagoon, the Foros Bay, and the Vistula Lagoon pilots:
 
-4. Dataset for Physical, Social, and Ecological Characteristics of Coastal Units at four coastal restoration pilots across EU:
+4. A spatially explicit, participatively derived dataset for Nature-based Building Blocks integrating biophysical, social, and ecological characteristics across EU coastal restoration pilots:
 	C. Arslan, Earth Systems and Global Change Group, Wageningen University & Research (Framework development)
 	J.M. van Loon-Steensma, Earth Systems and Global Change Group, Wageningen University & Research (Task owner & Framework development)
 	Elisa Furlan, CMCC (Venice Lagoon Pilot)
 	Fabienne Horneman, CMCC (Venice Lagoon Pilot)
 	Alice Stocco, Ca' Foscari University of Venice (Venice Lagoon Pilot)
-	Laura Puertolas, Albirem (Ebro Delta Pilot)
-	Nil Alvarez, Eurecat (Ebro Delta Pilot)
 	Elista Hineva, IO-BAS (Foros Bay Pilot)
 	Nataliya Andreeva, IO-BAS (Foros Bay Pilot)
 	Grzegorz Rozynski, IBW-PAN (Vistula Lagoon Pilot)
 
-This data across the four pilots is embedded in the tool, which can be initialized by loading the REST-COAST project.
+This data across the three pilots is embedded in the tool, which can be initialized by loading the REST-COAST project.
 
 The framework and the associated Interactive Web Map tool can be extended beyond coastal and EU scope, contributing to the upscaling efforts for the NbS-driven restoration strategies across diverse landscapes and contexts. The tool promotes this through;
 - a possibility to launch a blank map as the basis for the Participtive Downscaling Approach across any landscape, and
