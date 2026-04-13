@@ -16,12 +16,12 @@ Data and knowledge from the participative application of the framework in the RE
 4. A spatially explicit, participatively derived dataset for Nature-based Building Blocks integrating biophysical, social, and ecological characteristics across EU coastal restoration pilots:
 	C. Arslan, Earth Systems and Global Change Group, Wageningen University & Research (Framework development)
 	J.M. van Loon-Steensma, Earth Systems and Global Change Group, Wageningen University & Research (Task owner & Framework development)
-	Elisa Furlan, CMCC (Venice Lagoon Pilot)
-	Fabienne Horneman, CMCC (Venice Lagoon Pilot)
+	Fabienne Horneman, CMCC & Ca' Foscari University of Venice(Venice Lagoon Pilot)
 	Alice Stocco, Ca' Foscari University of Venice (Venice Lagoon Pilot)
+	Elisa Furlan, CMCC & Ca' Foscari University of Venice (Venice Lagoon Pilot)
 	Elista Hineva, IO-BAS (Foros Bay Pilot)
 	Nataliya Andreeva, IO-BAS (Foros Bay Pilot)
-	Grzegorz Rozynski, IBW-PAN (Vistula Lagoon Pilot)
+	Grzegorz Różyński, IBW-PAN (Vistula Lagoon Pilot)
 
 This data across the three pilots is embedded in the tool, which can be initialized by loading the REST-COAST project.
 
