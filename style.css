@@ -1,22 +1,137 @@
-/* Styling of the project */        
-/* Global font */
+/*
+	============================================================
+	style.css — The Interactive Web Map | The NB³ Framework
+	============================================================
+	Stylesheet for the the Interactive Web Map's HTML elements.
+
+	Author      : C. Arslan, 2025
+	Affilitation: Wageningen University & Research
+	Project     : EU H2020 REST-COAST
+	Repository	: https://github.com/c-arslan-wur/interactive-web-map
+	Contact     : cengiz.arslan@wur.nl
+
+	Colour palette:
+	--blue-light : #add8e6  (Page header background)
+	--blue-dark  : #003366  (Page header text)
+	--teal-light : #F0FFFF  (Page header button)
+	--teal-hover : #a2c4c9  (Page header button: hover)
+	--green-hover: #9ead85  (Modal submit button)
+	--grey-light : #ecedea  (Modal dropdown)
+
+	Sections:
+	1. Base layout          (html, body, map container)
+	2. Page header          (h1, h2, logo, authors)
+	3. Page buttons      	(shared style + per-button positioning)
+	4. Modal dialog         (user data entry form)
+	5. Map legend           (collapsible legend panel)
+	============================================================
+*/
+
+/* ============================================================
+	1. BASE LAYOUT
+	Flex column: the map fills all remaining height below the fixed
+	header. Margin/padding reset removes browser defaults.
+=============================================================== */
+
 html, body {
-  font-family: 'Times New Roman', Times, serif;
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+	font-family: 'Times New Roman', Times, serif;
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
 }
-/* Set the size of the map container */
+/* Map container grows to fill all space below header */
 #map {
-	flex: 1; /*height: 100%;*/
+	flex: 1;
 }
-/* Shared button style */
+
+/* ============================================================
+	2. PAGE HEADER
+	h1 and h2 form a two-line header band in light blue.
+	The logo is positioned absolutely over the header band.
+	The authors span gets an underline hint on hover to signal
+	that it is clickable (wired to openReadme() in script.js).
+=============================================================== */
+
+h1 {
+
+	font-family: 'Times New Roman', Times, serif;
+	background-color: #add8e6;	/* blue-light */
+	color: #003366;           	/* blue-dark */
+	font-weight: bold;
+	margin: 0;
+	padding: 20px 0 0 120px;		/* left-indent clearing for logo */	
+}
+
+h2 {
+	font-family: 'Times New Roman', Times, serif;
+	background-color: #add8e6;	/* blue-light */
+	color: #003366;           	/* blue-dark */
+	font-size: 16px;
+	font-style: italic;
+	margin: 0;
+	padding: 0 0 20px 120px;	/* mirrors h1 indent */
+}
+
+/* Project & WUR logo — rendered as a CSS background image.
+   Positioned absolutely so it overlaps the header band.
+   Logo can be found in src/logo.png. */
+#logo {
+	position: absolute;
+	top: 30px;
+	left: 10px;
+	width: 100px; 
+	height: 50px; 
+	background-image: url('src/logo.png'); 
+	background-size: contain; /* Scales to fit within the container */
+	background-repeat: no-repeat; /* Prevent from repeating */
+}
+
+/* Author credit line — span is clickable (opens src/README.txt) */
+#authors span:hover {
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* Info button embedded in h1 (opens README.md).
+   Circular, light-blue to match the header band. */
+#info-btn {
+	background-color: #add8e6;
+	border: none;
+	border-radius: 50%;
+	cursor: pointer;
+	vertical-align: super;
+	font-size: 20px;
+	padding: 0;
+}
+#info-btn:hover {
+	background-color: #a2c4c9;
+}
+
+/* ============================================================
+   3. PAGE BUTTONS
+   All the Interactive Web Map control buttons share .map-btn for
+   base styling and are stacked on the right side of header area
+   via absolute positioning. Individual IDs control vertical placement.
+ 
+   Button stack order (top → bottom):
+     2px  — reset-view-button       (Locations Overview)
+     27px — load-locations-btn      (Rest-Coast dataset)	right: 10px
+     27px — load-locations-btn-WL   (Waterlands dataset)    right: 57px
+     27px — load-new-locations-btn  (Initialize blank map)  right: 106px
+     27px — load-locations-btn-file (Select local file)     right: 162px
+     52px — save-locations-btn      (Save current dataset as JSON)
+     77px — file-select-btn         (Select shape file)		right: 10px
+     77px — download-shp-to-geojson (Go to shape converter) right: 125px
+    110px — done-editing-btn        (Confirm polygon editing)
+================================================================ */
+
+/* Shared base style for all tool control buttons */
 .map-btn {
   position: absolute;
   right: 10px;
-  background-color: #F0FFFF;
+  background-color: #f0ffff;
   border: 1px solid #ccc;
   padding: 1px 5px;
   border-radius: 3px;
@@ -30,108 +145,63 @@ html, body {
 	background-color: #a2c4c9;
 }
 
-/* Reset view button brigs an overview window of the pilots */
+/* ROW 1: Locations overview - reset map view to default zoom */
 #reset-view-button {
 	top: 2px;
 }
-/* Button to load polygon data for rest-coast */
+/* ROW 2: Dataset loaders (four buttons, spaced right→left */
 #load-locations-btn {
 	top: 27px;
 }
 
-/* Button to load polygon data for waterlands */
 #load-locations-btn-WL {
 	top: 27px;
 	right: 57px;
 }
 
-/* Button to load polygon data from local drive */
 #load-locations-btn-file {
 	top: 27px;
 	right: 162px;
 }
 
-/* Button to load blank map */
 #load-new-locations-btn {
 	top: 27px;
 	right: 106px;
 }
 
-/* Button to save polygon data to local drive */
+/* ROW 3: Save data */
 #save-locations-btn {
 	top: 52px;
 }
-/* Button to load geojson shape file */
+
+/* ROW 4: Load data */
+/* Load shape file */
 #file-select-btn {
 	top: 77px;
 }
-/* Button to download geojson converter */
+/* Link to shape to geojson converter */
 #download-shp-to-geojson {
 	top: 77px;
 	right: 125px;
 }
 	
-/* Button to finish modifying shape of polygon */
+/* ── Row 5: Finishing polygon editing ──
+   Hidden by default; shown programmatically in script.js
+   during editPoints() and hidden again on confirmation.
+   High z-index ensures it sits above all Leaflet controls. */
 #done-editing-btn {
 	top: 110px;
 	display: none;
 	z-index: 3000;
 }
 
-/* Button to open Read me file in a new tab */
-#info-btn {
-	background-color: #add8e6;
-	border: none;
-	border-radius: 50%;
-	cursor: pointer;
-	vertical-align: super;
-	font-size: 20px;
-	padding: 0;
-}
-#info-btn:hover {
-	background-color: #a2c4c9;
-}
-/* Styling for the headers */
-h1 {
-  font-family: 'Times New Roman', Times, serif;
-  background-color: #add8e6; /* light blue */
-  color: #003366;            /* dark blue */
-  padding: 20px;
-  margin: 0;
-  font-weight: bold;
-  padding-left: 120px;
-  padding-bottom: 0;
-  padding-right: 0;
-}
-h2 {
-	font-family: 'Times New Roman', Times, serif;
-	background-color: #add8e6; /* light blue */
-	color: #003366;            /* dark blue */
-	padding: 20px;
-	margin: 0;
-	font-size: 16px;
-	font-style: italic;
-	padding-left: 120px;
-	padding-top: 0;
-}
+/* ============================================================
+   4. MODAL DIALOG
+   Data entry form for an existing (edit) or new (add) polygon.
+   A flex-column container keeps labels, inputs, and the submit
+   button in a consistent vertical stack with left indentation.
+=============================================================== */
 
-/* Style for the logo */
-#logo {
-	position: absolute;
-	top: 30px;
-	left: 10px;
-	width: 100px; /* Set the width of the logo */
-	height: 50px; /* Set the height of the logo */
-	background-image: url('src/logo.png'); /* Set the background image */
-	background-size: contain; /* Scale the background image to fit within the container */
-	background-repeat: no-repeat; /* Prevent the background image from repeating */
-}
-/* Style for authors */
-#authors span:hover {
-	text-decoration: underline;
-	cursor: pointer;
-}
-/* Modal box */
 .modal-content {
 	font-family: "Times New Roman", serif;
 	padding: 20px 24px;
@@ -139,55 +209,63 @@ h2 {
 	flex-direction: column;
 }
 
-/* Heading styles */
+/* Headings inside the modal */
 .modal-content h3 {
-	margin-left: 12px; /* left indentation */
+	margin-left: 12px; 
 }
 
 .modal-content h4 {
 	margin-left: 12px; /* left indentation for field labels */
 }
 
-/* Dropdown */
+/* Dropdown selection inside the modal */
 .modal-content select {
-	margin-left: 12px; /* indent dropdown list */
+	margin-left: 12px;
 	width: 15%;
 	padding: 4px 6px;
 	cursor: pointer;
 }
-
-/* Inputs */
-.modal-content input[type="text"] {
-	margin-left: 12px; /* indent inputs with labels */
-	width: 30%;
-	font-style: italic;
-	padding: 4px 6px;
-}
-
-/* Submit button */
-.modal-content button {
-	align-self: flex-end;
-	cursor: pointer;
-	padding: 6px 14px;
-}
-
-.modal-content button:hover {
-	background-color: #9ead85;
-}
-
 .modal-content select:hover,
 .modal-content select:focus {
 	outline: none;
 	background-color: #ecedea;
 }
 
+/* Free-text input fields (delineation, nbs process, URL etc.) */
+.modal-content input[type="text"] {
+	margin-left: 12px;
+	width: 30%;
+	font-style: italic;
+	padding: 4px 6px;
+}
+
+/* Submit button — right-aligned within the modal */
+.modal-content button {
+	align-self: flex-end;
+	cursor: pointer;
+	padding: 6px 14px;
+}
+.modal-content button:hover {
+	background-color: #9ead85;
+}
+
+/* ============================================================
+   5. MAP LEGEND
+   A scrollable legend panel for Leaflet custom control elements
+   from EMODnet and Copernicus services. Semi-transparent with a
+   blur backdrop to keep the map readable beneath it. Structured
+   as a flex column of .legend-block entries, each containing a
+   title and image rendered from corresponding servers.
+=============================================================== */
+
+/* Outer legend container */
 .map-legend {
   background: rgba(255,255,255,0.5);
   backdrop-filter: blur(2px);
   padding: 4px 6px;
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-  max-height: calc(100vh - 150px);
+  max-height: calc(100vh - 150px); /* stays within screen size */
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -195,6 +273,7 @@ h2 {
   font-size: 12px;
 }
 
+/* Individual legend entry per selected layer */
 .legend-block {
   display: flex;
   flex-direction: column;
@@ -204,14 +283,16 @@ h2 {
   border-radius: 4px;
 }
 
+/* Label above each legend image */
 .legend-title {
   font-weight: 600;
   text-align: center;
   line-height: 1.2;
 }
 
+/* Container for legend image with constrained dimensions */
 .legend-image {
-  max-height: calc(100vh-200px);          
+  max-height: calc(100vh - 200px);          
   max-width: 100%;
   display: flex;
   align-items: center;
@@ -219,6 +300,7 @@ h2 {
   overflow: hidden;
 }
 
+/* Actual legend image scaled to fit within container */
 .legend-image img {
   width: auto;
   height: auto;
@@ -227,4 +309,3 @@ h2 {
   object-fit: contain;
   image-rendering: crisp-edges;
 }
-
