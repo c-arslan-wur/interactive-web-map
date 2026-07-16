@@ -1349,6 +1349,7 @@ function showModal(callback) {
 					├─ 2006: Land cover / land use status of year 2006
 					├─ 2012: Land cover / land use status of year 2012
 					└─ 2018: Land cover / land use status of year 2018
+			└─ World Database on Protected Areas (WDPA): Import data layers from UNEP-WCMC for protected areas across the globe
 			└─ Biotopes: Imports (if exists) the inventory of habitat maps according to latest EUNIS classifications in a specific pilot site
 		├─ Loading parsed JSON dataset (null for blank map)
 		└─ Finalizing the setup for user interaction 
@@ -1366,6 +1367,7 @@ function showModal(callback) {
 		toggleCorineLayers()   		— Overlay control to hide/show CORINE Land Cover layers
 		buttonCorineLayer()    		— Enforces single-layer selection for CORINE Land Cover layers
 		toggleCopernicusLayers()	— Overlay control to hide/show available Copernicus layers
+		loadWdpaPolygons()     		— Fetches WDPA features as GeoJSON polygons for protected areas
 		legendUpdate()         		— Refreshes the legend panel HTML per selected overlay
 =============================================================== */
 async function initMap(inputJSON) {
@@ -1442,7 +1444,8 @@ async function initMap(inputJSON) {
 	mapOverlays = {
 		"Esri Services": {'Labels (ESRI)': esriLabels},
 		"EMODnet Services" : {},
-		"Copernicus Services" : {}
+		"Copernicus Services" : {},
+		"UNEP-WCMC" : {}
 	};
 
 	
@@ -1913,6 +1916,176 @@ async function initMap(inputJSON) {
 	// Initialize Copernicus layers in collapsed state
 	toggleCopernicusLayers(false);
 	
+	
+	/*	Overlay 4. World Database of Protected Areas
+	
+		Imports the most comprehensive database for marine and terresterial
+		protected areas from a collaborative compilation and management by
+		UN Environment Programme World Conservation Monitoring Centre.
+		
+		Actively queries on the protected areas in the database in the
+		current viewport.
+
+		Information on each protected area is given in a popup wen hovered
+		over a specific area.
+	*/
+	// WDPA feature layer query endpoint
+	const wdpaQuery = 'https://data-gis.unep-wcmc.org/server/rest/services/ProtectedSites/The_World_Database_of_Protected_Areas/MapServer/1/query';
+
+	// Toggle for the layer group control
+	const protectedAreas = L.layerGroup();
+
+	// Overlay layer reference and refresh control
+	let wdpaLayer = null;
+	let wdpaRefreshTimer;
+	let wdpaRequestId = 0;
+
+	/** Function to build the query URL for the protected areas lying in the
+		current viewport.
+
+		@param {L.LatLngBounds} vPort:	current viewport boundaries
+		@returns {string}	Query URL returning GeoJSON
+	*/
+	function getWdpaQueryUrl(vPort) {
+		const bbox = [vPort.getWest(), vPort.getSouth(), vPort.getEast(), vPort.getNorth()].join(',');
+		const ramsarFilter = encodeURIComponent("desig_eng='Wetland of International Importance (Ramsar Site)'");
+		return `${wdpaQuery}?where=${ramsarFilter}&outFields=name,desig_eng,rep_area,supp_info`
+			+ `&geometry=${bbox}&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects`
+			+ `&inSR=4326&outSR=4326&returnGeometry=true&f=geojson`;
+	}
+
+	/** Function to clear all Ramsar sites from the map. */
+	function clearWdpaLayer() {
+		if (wdpaLayer) {
+			protectedAreas.removeLayer(wdpaLayer);
+			wdpaLayer = null;
+		}
+	}
+
+	/** Function to build popup HTML for a Ramsar Site polygon. 
+
+		Loads the basic information for each protected area from the WDPA database, including
+		name, designation, reported area, and supplementary information link (if available).
+
+		Uses the propertyCheck() function to format each property and omit empty fields.
+
+		@param {Object} props:	Properties of a WDPA polygon feature
+		@returns {string}		Formatted HTML string for the popup
+	*/
+	function wdpaPopup(props) {
+		const supplementaryText = props?.supp_info || '';
+		const supplementaryUrl = supplementaryText.match(/https?:\/\/[^\s]+/)?.[0] || '';
+		const supplementaryInfo = supplementaryUrl
+			? supplementaryText.replace(supplementaryUrl, `<a href="${supplementaryUrl}" target="_blank" rel="noopener noreferrer">${supplementaryUrl}</a>`)
+			: supplementaryText;
+		return `
+			<div style="font-size:1.1em;font-weight:600;text-decoration:underline;margin-bottom:4px;">Protected Area</div>
+			${propertyCheck("Site", props?.name)}
+			${propertyCheck("Designation", props?.desig_eng)}
+			${propertyCheck("Reported Area", props?.rep_area, ' km&sup2')}
+			${supplementaryInfo ? `<div>${supplementaryInfo}</div>` : ''}
+		`;
+	}
+
+	/** Function to import WDPA polygons as an overlay layer in the map.
+		
+		Only loads when the overlay is active and the map is zoomed in enough.
+
+		- Fetches the WDPA query endpoint for the current viewport
+		- Renders each feature as a polygon with a HMTL popup
+		- Adds the polygon layer to the map	
+	*/
+	function loadWdpaPolygons() {
+		if (!map.hasLayer(protectedAreas) || map.getZoom() <= 10) {
+			clearWdpaLayer();
+			return Promise.resolve(null);
+		}
+
+		const requestId = ++wdpaRequestId;
+		return fetch(getWdpaQueryUrl(map.getBounds()))
+			.then(res => res.json())
+			.then(data => {
+				if (requestId !== wdpaRequestId) return null;
+				if (!map.hasLayer(protectedAreas) || map.getZoom() <= 10) {
+					clearWdpaLayer();
+					return null;
+				}
+
+				clearWdpaLayer();
+				const layer = L.geoJSON(data, {
+					pane: 'backgroundPane',
+					style: {
+						color: '#1f63b7',
+						weight: 1,
+						fillColor: '#4b70b9',
+						fillOpacity: 0.25
+					},
+					onEachFeature: (feature, featureLayer) => {
+						const content = wdpaPopup(feature.properties);
+						let popupHideTimer = null;
+						featureLayer.on('mouseover', function () {
+							if (popupHideTimer) {
+								clearTimeout(popupHideTimer);
+								popupHideTimer = null;
+							}
+							this.infoPopup = L.popup({ closeButton: false, className: 'infoBox' })
+								.setLatLng(polyLocater(this))
+								.setContent(content)
+								.openOn(map);
+						});
+						featureLayer.on('mouseout', function () {
+							if (popupHideTimer) clearTimeout(popupHideTimer);
+							popupHideTimer = setTimeout(() => {
+								if (this.infoPopup && map.hasLayer(this.infoPopup) && !this.infoPopup._container?.matches(':hover')) {
+									map.closePopup(this.infoPopup);
+									this.infoPopup = null;
+								}
+								popupHideTimer = null;
+							}, 200);
+						});
+					}
+				});
+				protectedAreas.addLayer(layer);
+				wdpaLayer = layer;
+				return layer;
+			})
+			.catch(() => null);
+	}
+
+	/** Function to control the rendering of WDPA polygons
+		
+		Refresh the Ramsar Sites overlay when the map view changes.		
+	*/
+	function refreshWdpa() {
+		if (!map.hasLayer(protectedAreas) || map.getZoom() <= 10) {
+			clearWdpaLayer();
+			return;
+		}
+		loadWdpaPolygons();
+	}
+
+	/** Function to schedule a refresh of the WDPA overlay
+
+		Uses a timeout to avoid excessive requests when the map is being panned or zoomed.	
+	 */
+	function scheduleWdpaRefresh() {
+		clearTimeout(wdpaRefreshTimer);
+		wdpaRefreshTimer = setTimeout(refreshWdpa, 150);
+	}
+
+	// Re-render the Ramsar Sites overlay when the map view changes.
+	map.on('zoomend moveend', scheduleWdpaRefresh);
+	map.on('overlayadd overlayremove', function (e) {
+		if (e.layer === protectedAreas) {
+			scheduleWdpaRefresh();
+		}
+	});
+
+	// Add WDPA in the layer control
+	mapOverlays["UNEP-WCMC"] = { "Ramsar Sites": protectedAreas };
+	updateLayerControl();
+	
+	//
 	/*	LEGEND CONTROL AND OVERLAY EVENT handlers
 	
 		A custom Leaflet control renders legend graphics for active overlay layers.
