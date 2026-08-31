@@ -14,7 +14,7 @@
 	Contact     : cengiz.arslan@wur.nl
 
 	Main functional inventory of the script includes:
-		Loading existing NB³ Units	- REST-COAST, WATERLANDS, Local dir. etc.
+		Loading existing NB³ Units	- REST-COAST, WATERLANDS, Gediz Delta, Local dir. etc.
 		Loading new NB³ Units		- Zipped shape file or geojson
 		Editing NB³ Unit metadata	- Pilot name, NbS process, link to dataset
 		Editing NB³ Unit shape data	- Modifying vertices of polygons
@@ -156,6 +156,7 @@ let linksToSharedFolders = {
 	Button → function map:
 	RC  button  → mapMode="rest-coast"  → loadMap()	→ initMap(RC data)
 	WL  button  → mapMode="waterlands"  → loadMap() → initMap(WL data)
+	GD  button  → mapMode="gediz"		→ loadMap() → initMap(GD data)
 	DIR button  → mapMode="directory"   → loadMap() → fileInput.click()
 	MAP button  → mapMode="new-map"     → loadMap() → initMap(null)
 	Load Shape  → shapefileInput.click() → Select zipped .shp or GEOJSON
@@ -269,6 +270,13 @@ loadBtnWL.addEventListener('click', async () => {
 	await loadMap();
 });
 
+// Load Gediz Delta NB³ Units from src/NB3UnitsGD.json
+const loadBtnWL = document.getElementById('load-locations-btn-GD');
+loadBtnWL.addEventListener('click', async () => {
+	mapMode = "gediz";
+	await loadMap();
+});
+
 // Load NB³ Units from a user-selected local JSON file
 const loadBtnFile = document.getElementById('load-locations-btn-file');
 loadBtnFile.addEventListener('click', async () => {
@@ -350,6 +358,19 @@ async function loadMap() {
 		} catch (err) {
 			console.error("Error loading WaterLANDS pilots:", err);
 			alert("Could not load WaterLANDS map. Please select a .json file from directory");
+		}
+	
+	} else if (mapMode === "gediz") {
+		try {
+			const response = await fetch("src/NB3UnitsGD.json");
+			if (!response.ok) throw new Error("Default JSON not found in src/");
+			const JSONdata = await response.json();
+			document.getElementById('confirmationMessage').style.display = 'none';
+			initMap(JSONdata);
+			return;
+		} catch (err) {
+			console.error("Error loading Gediz Delta site:", err);
+			alert("Could not load Gediz Delta map. Please select a .json file from directory");
 		}
 		
 	} else if (mapMode === "directory") {

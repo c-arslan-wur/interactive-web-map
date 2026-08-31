@@ -119,8 +119,9 @@ h2 {
      2px  — reset-view-button       (Locations Overview)
      27px — load-locations-btn      (Rest-Coast dataset)	right: 10px
      27px — load-locations-btn-WL   (Waterlands dataset)    right: 57px
-     27px — load-new-locations-btn  (Initialize blank map)  right: 106px
-     27px — load-locations-btn-file (Select local file)     right: 162px
+     27px — load-locations-btn-GD   (Gediz Delta dataset)    right: 107px
+     27px — load-new-locations-btn  (Initialize blank map)  right: 157px
+     27px — load-locations-btn-file (Select local file)     right: 210px
      52px — save-locations-btn      (Save current dataset as JSON)
      77px — file-select-btn         (Select shape file)		right: 10px
      77px — download-shp-to-geojson (Go to shape converter) right: 125px
@@ -159,14 +160,19 @@ h2 {
 	right: 57px;
 }
 
+#load-locations-btn-GD {
+	top: 27px;
+	right: 107px;
+}
+
 #load-locations-btn-file {
 	top: 27px;
-	right: 162px;
+	right: 157px;
 }
 
 #load-new-locations-btn {
 	top: 27px;
-	right: 106px;
+	right: 210px;
 }
 
 /* ROW 3: Save data */
