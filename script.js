@@ -271,8 +271,8 @@ loadBtnWL.addEventListener('click', async () => {
 });
 
 // Load Gediz Delta NB³ Units from src/NB3UnitsGD.json
-const loadBtnWL = document.getElementById('load-locations-btn-GD');
-loadBtnWL.addEventListener('click', async () => {
+const loadBtnGD = document.getElementById('load-locations-btn-GD');
+loadBtnGD.addEventListener('click', async () => {
 	mapMode = "gediz";
 	await loadMap();
 });
