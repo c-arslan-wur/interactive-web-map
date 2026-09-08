@@ -3486,12 +3486,24 @@ function checkIntersection(atPilot) {
 		
 		Generates evenly spaced HSL colors around the color wheel.
 		
+		Avoids generating similar colors for overlapping NB³ Units.
+		
 		@param {number} n:	Number of colors to generate
 		@returns {string[]} Array of CSS HSL coor strings
 	*/
 	function generateColors(n) {
+		// Avoid the green-yellow range (80° to 160°) for better visibility of overlapping NB³ Units
+		const excludedStart = 80;
+  		const excludedEnd = 160;
+  		const excludedRange = excludedEnd - excludedStart;
+  		const availableRange = 360 - excludedRange;
+
 		return Array.from({ length: n }, (_, i) => {
-			const hue = Math.round((360/n)*i);
+			let hue = Math.round((availableRange/n)*i);
+			// Shift hue to avoid the excluded range
+			if (hue >= excludedStart) hue += excludedRange;
+			// Ensure hue wraps around the color wheel
+			hue = hue % 360; 
 			return `hsl(${hue}, 70%, 50%)`;
 		});
 	}
