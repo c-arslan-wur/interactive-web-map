@@ -2044,12 +2044,13 @@ async function initMap(inputJSON) {
 					onEachFeature: (feature, featureLayer) => {
 						const content = wdpaPopup(feature.properties);
 						let popupHideTimer = null;
-						featureLayer.on('mouseover', function () {
+						featureLayer.on('mouseover', function (e) {
 							if (popupHideTimer) {
 								clearTimeout(popupHideTimer);
 								popupHideTimer = null;
 							}
-							this.infoPopup = L.popup({ closeButton: false, className: 'infoBox' })
+							this.hoverLatLng = e.latlng;
+							this.infoPopup = L.popup({ closeButton: false, className: 'infoBox', autoPan: false })
 								.setLatLng(polyLocater(this))
 								.setContent(content)
 								.openOn(map);
@@ -2563,13 +2564,14 @@ function assignMarkerEvents (marker) {
 function assignPolygonEvents (polygon) {
 	
 	// Mouseover: popup with NB³ Unit metadata
-	polygon.on('mouseover', function () {
+	polygon.on('mouseover', function (e) {
 		if (isEditPolygon || rightClickMenu) return;
 		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
 			"<p><strong>NB³ Unit: </strong>" + (this.options.delin || '') + "<br>" +
 			"<strong>Restoration Process: </strong>" + (this.options.nbsBB || '') + "<br>" +
 			"<strong>Restored Area: </strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
-		this.infoPopup = L.popup({closeButton: false , className: 'infoBox' })
+		this.hoverLatLng = e.latlng;	
+		this.infoPopup = L.popup({closeButton: false , className: 'infoBox', autoPan: false})
 		 .setLatLng(polyLocater(this))
 		 .setContent(content)
 		 .openOn(map);
@@ -2698,14 +2700,15 @@ function assignPolygonEvents (polygon) {
 function assignLocationEvents (polygon) {
 	
 	// Mouseover: info popup with information on upscaling zone
-	polygon.on('mouseover', function () {
+	polygon.on('mouseover', function (e) {
 		if (isEditPolygon || rightClickMenu) return;
 		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
 			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Restoration Upscaling Zone</span>" + "<br>" +
 			"<strong>Location:</strong>" + (this.options.pilot || '') + "<br>" +
 			"<strong>Code:</strong>" + (this.options.code || '') + "<br>" +
 			"<strong>Area:</strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
-		this.infoPopup = L.popup({closeButton: false , className: 'infoBox' })
+		this.hoverLatLng = e.latlng;	
+		this.infoPopup = L.popup({closeButton: false , className: 'infoBox', autoPan: false	})
 		 .setLatLng(polyLocater(this))
 		 .setContent(content)
 		 .openOn(map);
@@ -3428,10 +3431,12 @@ function isLink(testLink) {
 /** Function to calculate top-right corner of a polygon
 	
 	Returns the top-right corner of a Leaflet polygon's bounding box
-	as a Leaflet latitude and longitue object. 
+	as a Leaflet latitude and longitue object.
 	
 	Used to achor hover info popups to a fixed location for Leaflet
 	polygons (top-right).
+	UPDATE: Due to practical issues with Leaflet's popup anchor, this
+	function is now used to anchor popups to mouse entry points. 
 	
 	Avoids the blocking of a polygon's view on map.
 	
@@ -3439,10 +3444,11 @@ function isLink(testLink) {
 	@returns {L.latLng} The north-east corner of the polygon's bounding box
 */	
 function polyLocater(polygon) {
-	const coords = polygon.getLatLngs()[0];
-	const maxLat = coords.reduce((max, coord) => Math.max(max, coord.lat), coords[0].lat);
-	const maxLng = coords.reduce((max, coord) => Math.max(max, coord.lng), coords[0].lng);
-	return L.latLng(maxLat, maxLng);
+	// const coords = polygon.getLatLngs()[0];
+	// const maxLat = coords.reduce((max, coord) => Math.max(max, coord.lat), coords[0].lat);
+	// const maxLng = coords.reduce((max, coord) => Math.max(max, coord.lng), coords[0].lng);
+	// return L.latLng(maxLat, maxLng);
+	return polygon.hoverLatLng || polygon.getBounds().getCenter();
 }
 
 /** Function to detect intersection for colour coding
