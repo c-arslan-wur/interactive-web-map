@@ -88,7 +88,7 @@ let polygons = [];
 // The full parsed JSON dataset for the active map mode, including an array of pilot objects each with an array of NB³ Units - @type{Object[]|undefined}
 let locations;
 
-// Array of Leaflet layers defining the spatial extent for upscaling projections for each NB³ Unit - @type{L.Layer[]}
+// Array of Leaflet layers defining the spatial extent for upscaling/impact projections for each NB³ Unit - @type{L.Layer[]}
 let locationsCoords = [];
 
 // Array of Leaflet markers representing pilot-site centroids: shown at overview zoom level, hidden when zoomed into - @type{L.Marker[]}
@@ -500,7 +500,7 @@ resetViewBtn.addEventListener('click', function() {
 		if (!map.hasLayer(marker)) marker.addTo(map);
 	});
 	
-	// Hide overlays for upscaling boundaries
+	// Hide overlays for upscaling/impact boundaries
 	locationsCoords.length && locationsCoords.forEach(poly => {
 		if (map.hasLayer(poly)) map.removeLayer(poly);
 	});
@@ -2234,7 +2234,7 @@ async function initMap(inputJSON) {
 		If inputJSON is provided, the NB³ Units defined per pilot site
 		is extracted and rendered in the map sequentially. Accordingly:
 		
-			1. If a spatial upscaling extent for the current pilot is
+			1. If a spatial upscaling/impact extent for the current pilot is
 			defined, then it is rendered as a semi-transparent Leaflet
 			polygon in the map.
 
@@ -2260,7 +2260,7 @@ async function initMap(inputJSON) {
 		// Looping through each pilot site
 		locations.forEach(function(place) {
 			
-			//	1. Spatial upscaling extent of a pilot site
+			//	1. Spatial upscaling/impact extent of a pilot site
 			if (place.coords && place.coords.length !== 0) {
 				
 				// Normalizing the coordinates to a multi-ring array: standard rendering as Leaflet polygon
@@ -2420,11 +2420,11 @@ async function initMap(inputJSON) {
 			└─ Define actions by zoom level (calibrated empirically): 
 				└─ Zoom level >= 10: Suitable resolution for drawing
 					├─ Show draw toolbar 		
-					├─ Show spatial upscaling extent
+					├─ Show spatial upscaling/impact extent
 					└─ Show NB³ Units 
 				└─ Zoom level < 10: Not enough resolution for drawing 
 					├─ Hide draw toolbar 		
-					├─ Hide spatial upscaling extent
+					├─ Hide spatial upscaling/impact extent
 					├─ Hide biotope overlays 
 					└─ Hide NB³ Units
 				└─ Zoom level >= 6: Pilot-scale zoom in
@@ -2465,7 +2465,7 @@ async function initMap(inputJSON) {
 /* ============================================================
    SECTION 5 — FUNCTIONS FOR HANDLING MAP ELEMENT EVENTS
    ============================================================
-	For each pilot site and spatial units within these sites (NB³ Unit or spatial upscaling extent)
+	For each pilot site and spatial units within these sites (NB³ Unit or spatial upscaling/impact extent)
 	are designed to facilitate user interaction for both data retrieving and data inputting.
 	
 	These interactions are controlled through functions that assign event handlers for:
@@ -2487,7 +2487,7 @@ async function initMap(inputJSON) {
 		mouseover:	shows popup with pilot description from global 'locations' object
 		mouseout:	closes popup with a delay - allows user to hover over popup without closing
 		left-click:	flies to pilot's pre-defined zoom settings, sets global 'activePilot', renders all
-					NB³ Units and spatial upscaling extent within pilot, activates draw toolbar
+					NB³ Units and spatial upscaling/impact extent within pilot, activates draw toolbar
 					
 	@param {L.Marker}	marker:		Leaflet marker created during map initialization in Section 4
 */
@@ -2533,7 +2533,7 @@ function assignMarkerEvents (marker) {
 		removeDrawTools();
 		addDrawTools();
 		
-		// Render spatial upscaling extent (if exists)
+		// Render spatial upscaling/impact extent (if exists)
 		locationsCoords.length && locationsCoords.forEach(function (poly) {
 			if (poly.options.pilot === activePilot && poly.options.view) {
 				poly.addTo(map);
@@ -2638,14 +2638,14 @@ function assignPolygonEvents (polygon) {
 				'</div>';
 		
 		// Context menu items that are displayed upon existence
-		// 	├─	Toggle Upscaled Zone wired to toggleView() in Section 6
+		// 	├─	Toggle Impact Zone wired to toggleView() in Section 6
 		//	└─	Baseline Ecological Assessment wired to loadBiotopes() in Section 6
 		const hasUpscaled = locationsCoords && locationsCoords.some(loc => loc.options.pilot === this.options.pilot);
 		if (hasUpscaled) {
 			menu += '<div style="padding: 3px 3px; cursor: pointer;" ' + 
 					'onmouseover="this.style.backgroundColor=\'#f0f0f0\'" '+
 					'onmouseout="this.style.backgroundColor=\'white\'" '+
-					'onclick="toggleView()">Toggle Upscaled Zone</div>';
+					'onclick="toggleView()">Toggle Impact Zone</div>';
 		}
 		const biotopesLoaded = Object.keys(mapOverlays?.Biotopes || {})
 			.some(key => key.startsWith(`${this.options.delin}: `));
@@ -2687,27 +2687,28 @@ function assignPolygonEvents (polygon) {
 	});
 }
 
-/**	Function to assign mouse events to spatial upscaling extent
+/**	Function to assign mouse events to spatial upscaling/impact extent
 
-	Assigns hover events to Leaflet polygon for Restoration Upscaling Zone.
+	Assigns hover events to Leaflet polygon for Restoration Impact Zone.
 	
 	Events:
 		mouseover:	shows popup with information including pilot name, zone code, and area
 		mouseout:	closes popup 
 	
-	@param {L.polygon} polygon:	Spatial upscaling extent created as Leaflet polygon
+	@param {L.polygon} polygon:	Spatial upscaling/impact extent created as Leaflet polygon
 */		
 function assignLocationEvents (polygon) {
 	
-	// Mouseover: info popup with information on upscaling zone
+	// Mouseover: info popup with information on upscaling/impact zone
 	polygon.on('mouseover', function (e) {
 		if (isEditPolygon || rightClickMenu) return;
 		const content = "<div style='line-height:1.6; font-family: \"Times New Roman\", serif;'>" +
-			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Restoration Upscaling Zone</span>" + "<br>" +
+			"<p><span style='font-size:1.2em; text-decoration:underline; font-weight:bold;'>Restoration Impact Zone</span>" + "<br>" +
 			"<strong>Location:</strong>" + (this.options.pilot || '') + "<br>" +
 			"<strong>Code:</strong>" + (this.options.code || '') + "<br>" +
 			"<strong>Area:</strong>" + (-this.options.zIndex) + "ha</p>" + "</div>";
-		this.hoverLatLng = e.latlng;	
+		this.hoverLatLng = e.latlng;
+		this._path.style.cursor = 'text';	
 		this.infoPopup = L.popup({closeButton: false , className: 'infoBox', autoPan: false	})
 		 .setLatLng(polyLocater(this))
 		 .setContent(content)
@@ -2752,8 +2753,8 @@ function assignLocationEvents (polygon) {
 		└─ Link to NB³ Unit		→	Generates a specific link to the unit
 			└─ linkToPolygon()	→	Creates a URL link using URI encoding
 								→	Copies link to clipboard
-		└─ Toggle Upscaled Zone	→	Shows/Hides spatial upscaling extent for pilot
-			└─ toggleView()		→	Handles the visibility of the upscaling extent on map
+		└─ Toggle Impact Zone	→	Shows/Hides spatial upscaling/impact extent for pilot
+			└─ toggleView()		→	Handles the visibility of the upscaling/impact extent on map
 								→	Re-adds all NB³ Units within the pilot for rendering order
 		└─ Baseline Ecological Assessment	→	Imports habitat overlays for the NB³ Unit (if exists)
 			└─ loadBiotopes()	→	Checks directory (data/[NB³ Unit]) if biotope layers exists
@@ -3093,16 +3094,16 @@ function linkToPolygon() {
 
 }
 
-/** Function to toggle spatial upscaling extent of a pilot
+/** Function to toggle spatial upscaling/impact extent of a pilot
 
-	Toggles the visibility of the upscaling extent rendered as Restoration Upscaling Zone
+	Toggles the visibility of the upscaling/impact extent rendered as Restoration Impact Zone
 	in the map for the pilot site.
 	
 	Maintains the render order for all NB³ Units by bringing them to front.
 	
 	NOTE: In this current version of the Interactive Web Map tool, this spatial extent is
 	attached to any NB³ Unit within the pilot. In future version, defining and rendering 
-	this upscaling zone might be designed again in collaboration with stakeholders' 
+	this upscaling/impact zone might be designed again in collaboration with stakeholders' 
 	demands and approaches.
 */	
 function toggleView() {		
@@ -3115,14 +3116,14 @@ function toggleView() {
 		rightClickMenu = false;
 	}
 	
-	// Extracting pilot's spatial upscaling extent and all NB³ Units within the pilot
+	// Extracting pilot's spatial upscaling/impact extent and all NB³ Units within the pilot
 	const plt = selectedPolygon.options.pilot;
 	const tempPolys = polygons.filter(p => p.options.pilot === plt);
 	const tempLocs = locationsCoords
 		? locationsCoords.filter(loc => loc.options.pilot === plt)
 		: [];
 	
-	// Toggling the spatial upscaling extent in the map
+	// Toggling the spatial upscaling/impact extent in the map
 	let view = false;
 	tempLocs.forEach(loc => {
 		if (map.hasLayer(loc)) {
